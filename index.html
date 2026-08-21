@@ -1,0 +1,2717 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flight Watch — Ant Nuptial Flight Forecaster</title>
+<meta name="description" content="Modern, clean ant nuptial flight forecaster and community sighting tracker with regional species filtering.">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap');
+
+:root {
+  /* YouTube Light Theme */
+  --bg-primary: #F9F9F9;
+  --bg-surface: #FFFFFF;
+  --bg-secondary: #F2F2F2;
+  --bg-hover: #E5E5E5;
+  --border-color: #E5E5E5;
+  --border-strong: #D1D1D1;
+  --text-primary: #0F0F0F;
+  --text-secondary: #606060;
+  --text-tertiary: #909090;
+  --yt-red: #CC0000;
+  --yt-red-hover: #AA0000;
+  --yt-red-light: rgba(204, 0, 0, 0.08);
+  --accent-blue: #065FD4;
+  --accent-green: #0F7B44;
+  --accent-green-bg: #E6F4EA;
+  --accent-amber: #B06000;
+  --accent-amber-bg: #FEF7E0;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.14);
+  --modal-overlay: rgba(0,0,0,0.5);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 9999px;
+  --nav-height: 56px;
+}
+
+[data-theme="dark"] {
+  /* YouTube Dark Theme */
+  --bg-primary: #0F0F0F;
+  --bg-surface: #1F1F1F;
+  --bg-secondary: #272727;
+  --bg-hover: #383838;
+  --border-color: #303030;
+  --border-strong: #444444;
+  --text-primary: #F1F1F1;
+  --text-secondary: #AAAAAA;
+  --text-tertiary: #717171;
+  --yt-red: #FF0000;
+  --yt-red-hover: #CC0000;
+  --yt-red-light: rgba(255, 0, 0, 0.15);
+  --accent-blue: #3EA6FF;
+  --accent-green: #2BA640;
+  --accent-green-bg: rgba(43, 166, 64, 0.15);
+  --accent-amber: #F9A825;
+  --accent-amber-bg: rgba(249, 168, 37, 0.15);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.25);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.45);
+  --modal-overlay: rgba(0,0,0,0.75);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Roboto', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ==========================================================================
+   1. STICKY TOP NAVIGATION BAR (YouTube-Style)
+   ========================================================================== */
+.top-nav {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-height);
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 1000;
+  box-shadow: var(--shadow-sm);
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+.brand-logo {
+  width: 32px;
+  height: 32px;
+  background: var(--yt-red);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  box-shadow: 0 2px 6px rgba(204, 0, 0, 0.3);
+}
+.brand-title {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.brand-title span {
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Buttons & Chips */
+.btn {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.btn-primary {
+  background-color: var(--yt-red);
+  color: #FFFFFF;
+  font-weight: 600;
+}
+.btn-primary:hover {
+  background-color: var(--yt-red-hover);
+  transform: translateY(-1px);
+}
+.btn-secondary {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+.btn-secondary:hover {
+  background-color: var(--bg-hover);
+}
+.btn-outline {
+  background-color: transparent;
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+.btn-outline:hover {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-strong);
+}
+.btn-icon {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+.btn-icon:hover {
+  background-color: var(--bg-secondary);
+}
+
+.admin-badge {
+  font-size: 11px;
+  background: var(--yt-red-light);
+  color: var(--yt-red);
+  border: 1px solid var(--yt-red);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   2. MAIN CONTAINER & HERO SECTION
+   ========================================================================== */
+.main-wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 24px 20px 80px;
+}
+
+.hero-section {
+  text-align: center;
+  margin-bottom: 28px;
+  padding: 24px 0 10px;
+}
+.hero-title {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+.hero-subtitle {
+  font-size: 15px;
+  color: var(--text-secondary);
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* Search Card */
+.search-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 28px;
+}
+
+.search-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 16px;
+  align-items: flex-end;
+}
+@media (max-width: 768px) {
+  .search-grid { grid-template-columns: 1fr; }
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+.input-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.input-field {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 14.5px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.input-field:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 2px rgba(6, 95, 212, 0.15);
+}
+
+.loc-action-btns {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.search-submit-row {
+  margin-top: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-color);
+}
+
+/* Map Drawer */
+.map-drawer {
+  display: none;
+  margin-top: 14px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+.map-drawer.show { display: block; }
+#mapContainer, #modalMapContainer {
+  height: 240px;
+  width: 100%;
+}
+
+/* Autocomplete Suggestion Dropdown */
+.suggest-box {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 100;
+  display: none;
+  margin-top: 4px;
+}
+.suggest-box.show { display: block; }
+.suggest-row {
+  padding: 10px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.suggest-row:last-child { border-bottom: none; }
+.suggest-row:hover { background-color: var(--bg-secondary); }
+
+/* ==========================================================================
+   3. FORECAST RESULTS SECTION
+   ========================================================================== */
+#resultsSection {
+  display: none;
+  animation: fadeIn 0.25s ease;
+  margin-bottom: 36px;
+}
+#resultsSection.show { display: block; }
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 32px 0 16px;
+}
+.section-title {
+  font-size: 20px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Regional Scope Banner (India active) */
+.scope-banner {
+  background-color: var(--accent-green-bg);
+  color: var(--accent-green);
+  border: 1px solid rgba(15, 123, 68, 0.2);
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  font-size: 13.5px;
+  font-weight: 500;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Main Gauge Card */
+.gauge-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 24px;
+}
+
+.gauge-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.gauge-index-num {
+  font-size: 38px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+.gauge-index-num small {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+.gauge-status-badge {
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+}
+.status-prime { background-color: var(--yt-red); color: #fff; }
+.status-good { background-color: var(--accent-green); color: #fff; }
+.status-possible { background-color: var(--accent-amber); color: #fff; }
+.status-unlikely { background-color: var(--bg-secondary); color: var(--text-secondary); }
+
+/* Progress Bar */
+.gauge-bar-track {
+  height: 12px;
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 10px;
+}
+.gauge-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, #3EA6FF, #2BA640, #F9A825, #FF0000);
+  transition: width 0.4s ease;
+}
+
+.telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border-color);
+}
+.telemetry-box {
+  background-color: var(--bg-primary);
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+}
+.telemetry-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.telemetry-val {
+  font-size: 20px;
+  font-weight: 700;
+}
+.telemetry-val small {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+/* Horizontal Chip Filter Bar */
+.filter-chip-bar {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-bottom: 18px;
+  scrollbar-width: thin;
+}
+.filter-chip {
+  padding: 6px 14px;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.filter-chip:hover { background-color: var(--bg-hover); }
+.filter-chip.active {
+  background-color: var(--text-primary);
+  color: var(--bg-primary);
+}
+
+/* Species Cards Grid */
+.species-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  gap: 18px;
+  margin-bottom: 32px;
+}
+.species-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.species-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.species-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.species-name {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.species-name-link {
+  color: var(--text-primary);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.2;
+  transition: color 0.15s ease;
+  cursor: pointer;
+}
+.species-name-link:hover {
+  color: var(--yt-red);
+  text-decoration: underline;
+}
+.species-name-link .ext-link-icon {
+  opacity: 0.45;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.species-name-link:hover .ext-link-icon {
+  opacity: 1;
+  transform: translate(1px, -1px);
+}
+
+.species-sci {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin-bottom: 10px;
+}
+.species-sci-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-style: italic;
+  font-size: 13px;
+  transition: color 0.15s ease;
+}
+.species-sci-link:hover {
+  color: var(--accent-blue);
+  text-decoration: underline;
+}
+.species-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.species-tag.tag-india {
+  background-color: var(--accent-green-bg);
+  color: var(--accent-green);
+}
+.species-tag.tag-invasive {
+  background-color: #FCE8E6;
+  color: #C5221F;
+}
+.species-tag.tag-tramp {
+  background-color: var(--accent-amber-bg);
+  color: var(--accent-amber);
+}
+
+/* Match Score Pill */
+.match-score-pill {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.match-score-pill.score-4 {
+  background-color: #E6F4EA;
+  color: #137333;
+  border: 1px solid rgba(19, 115, 51, 0.3);
+}
+.match-score-pill.score-3 {
+  background-color: #E8F0FE;
+  color: #1A73E8;
+  border: 1px solid rgba(26, 115, 232, 0.3);
+}
+.match-score-pill.score-2 {
+  background-color: #FEF7E0;
+  color: #B06000;
+  border: 1px solid rgba(176, 96, 0, 0.3);
+}
+.match-score-pill.score-1, .match-score-pill.score-0 {
+  background-color: var(--bg-secondary);
+  color: var(--text-tertiary);
+  border: 1px solid var(--border-color);
+}
+.match-score-pill.score-tramp {
+  background-color: #F3E8FD;
+  color: #7B1FA2;
+  border: 1px solid rgba(123, 31, 162, 0.3);
+}
+
+.probability-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.probability-label.prob-4 { color: #137333; font-weight: 700; }
+.probability-label.prob-3 { color: #1A73E8; font-weight: 700; }
+.probability-label.prob-2 { color: #B06000; font-weight: 600; }
+.probability-label.prob-1, .probability-label.prob-0 { color: var(--text-tertiary); }
+
+.factors-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.factor-pill {
+  font-size: 11.5px;
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+}
+.factor-pill.hit {
+  background-color: var(--accent-green-bg);
+  color: var(--accent-green);
+  font-weight: 600;
+}
+.factor-pill.miss {
+  background-color: var(--bg-secondary);
+  color: var(--text-tertiary);
+  border: 1px dashed var(--border-color);
+  opacity: 0.85;
+}
+
+.species-notes-box {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.45;
+  background-color: var(--bg-primary);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 12px;
+  border-left: 3px solid var(--border-strong);
+}
+
+.species-source-line {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-color);
+}
+
+/* Windows Table */
+.windows-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.windows-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.windows-table th {
+  background-color: var(--bg-secondary);
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+.windows-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-color);
+}
+.windows-table tr:last-child td { border-bottom: none; }
+
+/* ==========================================================================
+   4. CITIZEN SIGHTING FEED
+   ========================================================================== */
+.community-section {
+  margin-top: 40px;
+}
+.sighting-feed-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+}
+.sighting-item-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+}
+.sighting-photo-wrap {
+  height: 190px;
+  background-color: var(--bg-secondary);
+  position: relative;
+  overflow: hidden;
+}
+.sighting-photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s ease;
+}
+.sighting-photo-img:hover { transform: scale(1.03); }
+.sighting-item-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.sighting-item-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.sighting-item-sub {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+.sighting-weather-tag {
+  font-size: 11.5px;
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 10px;
+  display: inline-block;
+}
+.sighting-item-notes {
+  font-size: 13px;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 12px;
+  flex: 1;
+}
+.sighting-item-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+  border-top: 1px solid var(--border-color);
+  padding-top: 8px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Sighting Validation Badges */
+.sighting-status-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.status-approved {
+  background-color: var(--accent-green-bg);
+  color: var(--accent-green);
+  border: 1px solid rgba(15, 123, 68, 0.3);
+}
+.status-pending {
+  background-color: var(--accent-amber-bg);
+  color: var(--accent-amber);
+  border: 1px solid rgba(176, 96, 0, 0.3);
+}
+.status-rejected {
+  background-color: #FCE8E6;
+  color: #C5221F;
+  border: 1px solid rgba(197, 34, 31, 0.3);
+}
+
+/* Moderation Card */
+.mod-item-card {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+@media (max-width: 600px) {
+  .mod-item-card { flex-direction: column; }
+}
+.mod-thumb-img {
+  width: 90px;
+  height: 90px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+.mod-body {
+  flex: 1;
+}
+.mod-actions-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ==========================================================================
+   5. MODALS (Upload, Admin Login, Admin Console)
+   ========================================================================== */
+.modal-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: var(--modal-overlay);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+}
+.modal-backdrop.show { display: flex; animation: fadeIn 0.15s ease; }
+
+.modal-dialog {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 600px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+.modal-dialog.wide { max-width: 960px; }
+
+.modal-header-bar {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-header-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+.modal-close-icon {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  line-height: 1;
+}
+.modal-close-icon:hover { color: var(--yt-red); }
+
+.modal-content-area {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Upload Dropzone */
+.dropzone-box {
+  border: 2px dashed var(--border-strong);
+  background-color: var(--bg-primary);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  position: relative;
+  margin-bottom: 16px;
+}
+.dropzone-box:hover, .dropzone-box.dragover {
+  border-color: var(--yt-red);
+  background-color: var(--yt-red-light);
+}
+.preview-wrap {
+  display: none;
+  position: relative;
+}
+.preview-wrap.show { display: block; }
+.preview-img {
+  max-height: 180px;
+  border-radius: var(--radius-sm);
+}
+
+/* Admin Tabs */
+.admin-tab-nav {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 18px;
+}
+.admin-tab-btn {
+  padding: 8px 14px;
+  background: none;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+.admin-tab-btn.active {
+  color: var(--yt-red);
+  border-bottom-color: var(--yt-red);
+}
+.admin-tab-content { display: none; }
+.admin-tab-content.show { display: block; }
+
+/* Admin dataset table */
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.admin-table th {
+  background-color: var(--bg-secondary);
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+.admin-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: top;
+}
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="rag_data.js"></script>
+</head>
+<body>
+
+<!-- ==========================================================================
+     1. STICKY TOP NAVIGATION
+     ========================================================================== -->
+<header class="top-nav">
+  <div class="nav-left" id="navLogoBtn" title="Reset and return to Home">
+    <div class="brand-logo">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    </div>
+    <div class="brand-title">Flight<span>Watch</span></div>
+  </div>
+
+  <div class="nav-right">
+    <!-- Theme Toggle -->
+    <button class="btn-icon" id="themeToggleBtn" type="button" title="Toggle Light / Dark Mode">
+      <span id="themeIcon">🌙</span>
+    </button>
+
+    <!-- Upload CTA -->
+    <button class="btn btn-primary" id="openUploadBtn" type="button">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      Log Sighting
+    </button>
+
+    <!-- Admin Button / Avatar -->
+    <div id="adminNavContainer">
+      <button class="btn btn-outline" id="adminAuthBtn" type="button">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        <span id="adminBtnLabel">Admin Login</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ==========================================================================
+     2. MAIN CONTENT
+     ========================================================================== -->
+<main class="main-wrap">
+
+  <!-- Clean Hero Section -->
+  <section class="hero-section">
+    <h1 class="hero-title">Predict Ant Nuptial Flights</h1>
+    <p class="hero-subtitle">Check atmospheric conditions, track queen swarming probability, and explore native and invasive ant species occurrences with strict regional filtering.</p>
+  </section>
+
+  <!-- Main Search Form Component -->
+  <section class="search-card">
+    <div class="search-grid">
+      
+      <!-- Location Input -->
+      <div class="input-group">
+        <div class="input-label">
+          <span>Search Location</span>
+        </div>
+        <input class="input-field" id="locInput" type="text" placeholder="Enter city or area (e.g. Bangalore, Delhi, Hyderabad, London)…" autocomplete="off">
+        <div class="suggest-box" id="suggestBox"></div>
+        
+        <div class="loc-action-btns">
+          <button class="btn btn-secondary" id="useLocBtn" type="button" style="font-size:12px; padding:4px 10px;">
+            📍 Use My Location
+          </button>
+          <button class="btn btn-secondary" id="mapToggleBtn" type="button" style="font-size:12px; padding:4px 10px;">
+            🗺️ Pin on Map
+          </button>
+        </div>
+      </div>
+
+      <!-- Date Input -->
+      <div class="input-group">
+        <div class="input-label">Date</div>
+        <input class="input-field" id="dateInput" type="date">
+      </div>
+
+      <!-- Time Input -->
+      <div class="input-group">
+        <div class="input-label">Time</div>
+        <input class="input-field" id="timeInput" type="time">
+      </div>
+
+    </div>
+
+    <!-- Map Drawer -->
+    <div class="map-drawer" id="mapDrawer">
+      <div id="mapContainer"></div>
+      <div style="font-size:12px; color:var(--text-secondary); padding:8px 12px; display:flex; justify-content:space-between;">
+        <span>Click anywhere to drop or drag pin.</span>
+        <span id="coordReadout" style="font-weight:600; color:var(--text-primary);"></span>
+      </div>
+    </div>
+
+    <!-- Submit Row -->
+    <div class="search-submit-row">
+      <button class="btn btn-primary" id="checkConditionsBtn" type="button" style="padding:10px 24px; font-size:15px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        Check Flight Conditions
+      </button>
+      <span id="searchStatusMsg" style="font-size:13px; color:var(--text-secondary);"></span>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       3. FORECAST RESULTS SECTION
+       ========================================================================== -->
+  <section id="resultsSection">
+    
+    <div class="section-header">
+      <h2 class="section-title">Swarming Activity & Weather</h2>
+      <span id="resultPlaceBadge" style="font-size:13px; color:var(--text-secondary); font-weight:600;"></span>
+    </div>
+
+    <!-- Active Regional Scope Banner -->
+    <div class="scope-banner" id="scopeBanner" style="display:none;"></div>
+
+    <!-- Main Gauge Card -->
+    <div class="gauge-card">
+      <div class="gauge-top">
+        <div>
+          <div class="gauge-index-num" id="gaugeNum">0 <small>/ 100</small></div>
+          <div style="font-size:13px; color:var(--text-secondary); margin-top:2px;">Flight Activity Index</div>
+        </div>
+        <div>
+          <span class="gauge-status-badge" id="gaugeBadge">Analyzing…</span>
+        </div>
+      </div>
+
+      <div class="gauge-bar-track">
+        <div class="gauge-bar-fill" id="gaugeBarFill" style="width:0%;"></div>
+      </div>
+
+      <!-- Telemetry Box Grid -->
+      <div class="telemetry-grid">
+        <div class="telemetry-box">
+          <div class="telemetry-label">Ambient Temperature</div>
+          <div class="telemetry-val" id="tempVal">— <small>°C</small></div>
+        </div>
+        <div class="telemetry-box">
+          <div class="telemetry-label">Relative Humidity</div>
+          <div class="telemetry-val" id="humidityVal">— <small>%</small></div>
+        </div>
+        <div class="telemetry-box">
+          <div class="telemetry-label">Wind Speed</div>
+          <div class="telemetry-val" id="windVal">— <small>km/h</small></div>
+        </div>
+        <div class="telemetry-box">
+          <div class="telemetry-label">Rain (Past 48 Hours)</div>
+          <div class="telemetry-val" id="rainVal">— <small>mm</small></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Species Matches Section -->
+    <div class="section-header">
+      <h2 class="section-title">Matching Species</h2>
+    </div>
+
+    <!-- Horizontal Pill Filter -->
+    <div class="filter-chip-bar" id="speciesFilterBar"></div>
+
+    <!-- Species Grid -->
+    <div class="species-card-grid" id="speciesGrid"></div>
+
+    <!-- Best Windows Card -->
+    <div class="section-header">
+      <h2 class="section-title">Best Upcoming Windows (Next 16 Days)</h2>
+    </div>
+    <div class="windows-card">
+      <table class="windows-table">
+        <thead>
+          <tr>
+            <th>Time Window</th>
+            <th>Atmospheric Profile</th>
+            <th>Flight Probability</th>
+          </tr>
+        </thead>
+        <tbody id="windowsTableBody"></tbody>
+      </table>
+    </div>
+
+  </section>
+
+  <!-- ==========================================================================
+       4. COMMUNITY SIGHTINGS FEED
+       ========================================================================== -->
+  <section class="community-section">
+    <div class="section-header">
+      <h2 class="section-title">
+        <span>📸</span> Community Queen Sightings
+      </h2>
+      <button class="btn btn-secondary" id="openUploadBtn2" type="button" style="font-size:13px;">
+        + Submit Observation
+      </button>
+    </div>
+
+    <!-- Feed Filter Chips -->
+    <div class="filter-chip-bar" id="feedFilterBar" style="margin-bottom:14px;">
+      <button class="filter-chip active" data-filter="ALL">All Observations (<span id="feedTotalCount">0</span>)</button>
+      <button class="filter-chip" data-filter="APPROVED">🛡️ Validated Only (<span id="feedApprovedCount">0</span>)</button>
+      <button class="filter-chip" data-filter="PENDING">⏳ Pending Validation (<span id="feedPendingCount">0</span>)</button>
+    </div>
+
+    <div class="sighting-feed-grid" id="sightingFeedGrid"></div>
+  </section>
+
+</main>
+
+<!-- ==========================================================================
+     5. MODALS
+     ========================================================================== -->
+
+<!-- A. Upload Sighting Modal -->
+<div class="modal-backdrop" id="uploadModal">
+  <div class="modal-dialog">
+    <div class="modal-header-bar">
+      <h3 class="modal-header-title">Log a Queen Ant Sighting</h3>
+      <button class="modal-close-icon" id="closeUploadModalBtn">&times;</button>
+    </div>
+    <div class="modal-content-area">
+      <form id="sightingForm">
+        
+        <!-- Photo Dropzone -->
+        <div class="dropzone-box" id="uploadDropzone">
+          <input type="file" id="photoFileInput" accept="image/*" style="display:none;">
+          <div id="dropzonePrompt">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-secondary); margin-bottom:4px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+            <div style="font-weight:600; font-size:14px;">Click or drop queen ant photo here</div>
+            <div style="font-size:12px; color:var(--text-secondary);">Photo verification helps confirm species</div>
+          </div>
+          <div class="preview-wrap" id="previewWrap">
+            <img class="preview-img" id="previewImg" src="" alt="Queen ant photo">
+            <button type="button" class="btn btn-secondary" id="removePhotoBtn" style="font-size:11px; margin-top:8px;">Change Photo</button>
+          </div>
+        </div>
+
+        <!-- Location -->
+        <div class="input-group" style="margin-bottom:14px;">
+          <div class="input-label">Location Found</div>
+          <input class="input-field" id="modalLocInput" type="text" placeholder="City, park, or landmark…" required>
+          <div class="suggest-box" id="modalSuggestBox"></div>
+        </div>
+
+        <!-- Date & Time -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+          <div class="input-group">
+            <div class="input-label">Date</div>
+            <input class="input-field" id="modalDateInput" type="date" required>
+          </div>
+          <div class="input-group">
+            <div class="input-label">Time</div>
+            <input class="input-field" id="modalTimeInput" type="time" required>
+          </div>
+        </div>
+
+        <!-- Species -->
+        <div class="input-group" style="margin-bottom:14px;">
+          <div class="input-label">Species Identified / Guessed</div>
+          <select class="input-field" id="modalSpeciesSelect">
+            <option value="Unknown Queen (Need ID)">❓ Unknown Queen Ant (Need ID assistance)</option>
+            <optgroup label="India Native & Established Species (incl. Invasive Tramp Ants)">
+              <!-- Populated dynamically -->
+            </optgroup>
+            <optgroup label="Other Species">
+              <!-- Populated dynamically -->
+            </optgroup>
+            <option value="CUSTOM">✏️ Other (Enter custom species name)</option>
+          </select>
+          <input class="input-field" id="modalCustomSpeciesInput" type="text" placeholder="Enter species name…" style="display:none; margin-top:8px;">
+        </div>
+
+        <!-- Observer Name -->
+        <div class="input-group" style="margin-bottom:14px;">
+          <div class="input-label">Observer Name / Handle (Optional)</div>
+          <input class="input-field" id="modalAuthorInput" type="text" placeholder="e.g. AntLover_India or Anonymous Naturalist">
+        </div>
+
+        <!-- Notes -->
+        <div class="input-group" style="margin-bottom:16px;">
+          <div class="input-label">Field Notes / Habitat</div>
+          <textarea class="input-field" id="modalNotesInput" rows="2" style="height:auto; padding:8px 12px;" placeholder="e.g. Dealate queen found on damp pavement 30 mins after rain."></textarea>
+        </div>
+
+        <!-- Auto weather check -->
+        <div style="font-size:12.5px; display:flex; align-items:center; gap:8px; margin-bottom:20px;">
+          <input type="checkbox" id="modalAutoWeatherCheck" checked>
+          <label for="modalAutoWeatherCheck" style="color:var(--text-secondary); cursor:pointer;">
+            Automatically attach weather conditions from Open-Meteo
+          </label>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button class="btn btn-secondary" id="cancelUploadBtn" type="button">Cancel</button>
+          <button class="btn btn-primary" id="saveSightingBtn" type="submit">Submit Sighting</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- B. Admin Login Modal -->
+<div class="modal-backdrop" id="adminLoginModal">
+  <div class="modal-dialog" style="max-width:400px;">
+    <div class="modal-header-bar">
+      <h3 class="modal-header-title">Admin Authentication</h3>
+      <button class="modal-close-icon" id="closeAdminLoginBtn">&times;</button>
+    </div>
+    <div class="modal-content-area">
+      <form id="adminLoginForm">
+        <div class="input-group" style="margin-bottom:14px;">
+          <div class="input-label">Admin ID</div>
+          <input class="input-field" id="adminIdInput" type="text" placeholder="Enter admin username" required>
+        </div>
+        <div class="input-group" style="margin-bottom:16px;">
+          <div class="input-label">Password</div>
+          <input class="input-field" id="adminPasswordInput" type="password" placeholder="Enter password" required>
+        </div>
+        <div id="adminLoginError" style="color:var(--yt-red); font-size:13px; margin-bottom:12px; display:none;"></div>
+        <button class="btn btn-primary" type="submit" style="width:100%;">Sign In</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- C. Restricted Admin Portal Modal -->
+<div class="modal-backdrop" id="adminConsoleModal">
+  <div class="modal-dialog wide">
+    <div class="modal-header-bar">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <h3 class="modal-header-title">Admin Console</h3>
+        <span class="admin-badge">Protected Session</span>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-secondary" id="adminLogoutBtn" type="button" style="font-size:12px;">Sign Out</button>
+        <button class="modal-close-icon" id="closeAdminConsoleBtn">&times;</button>
+      </div>
+    </div>
+
+    <div class="modal-content-area">
+      <!-- Admin Tabs -->
+      <div class="admin-tab-nav">
+        <button class="admin-tab-btn active" data-tab="tab-dataset">Dataset Explorer</button>
+        <button class="admin-tab-btn" data-tab="tab-exports">Data Management</button>
+        <button class="admin-tab-btn" data-tab="tab-moderation">Moderation (<span id="adminContribCount">0</span>)</button>
+        <button class="admin-tab-btn" data-tab="tab-settings">API Settings</button>
+      </div>
+
+      <!-- Tab 1: Dataset Explorer -->
+      <div class="admin-tab-content show" id="tab-dataset">
+        <div style="display:flex; gap:10px; margin-bottom:14px;">
+          <input class="input-field" id="adminSearchDataset" type="text" placeholder="Search 36 peer-reviewed species, citations, or regions…">
+          <select class="input-field" id="adminFilterTier" style="width:200px;">
+            <option value="ALL">All Records (36)</option>
+            <option value="INDIA">🇮🇳 India Species (21)</option>
+            <option value="INVASIVE">⚠️ Invasive Species in India</option>
+            <option value="TIER_1">Tier 1 · Quantified</option>
+            <option value="TIER_2">Tier 2 · Documented</option>
+            <option value="TIER_3">Tier 3 · Non-Flying</option>
+            <option value="TIER_4">Tier 4 · Citizen Science</option>
+            <option value="TIER_5">Tier 5 · Monsoon Biology</option>
+            <option value="TIER_6">Tier 6 · Predicted</option>
+          </select>
+        </div>
+        <div style="max-height:420px; overflow-y:auto;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Species</th>
+                <th>Range & Status</th>
+                <th>Weather Trigger Profile</th>
+                <th>Literature Citation</th>
+              </tr>
+            </thead>
+            <tbody id="adminDatasetTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 2: Exports & Storage -->
+      <div class="admin-tab-content" id="tab-exports">
+        <h4 style="margin-bottom:8px; font-size:16px;">Export & Import Citizen Observations</h4>
+        <p style="color:var(--text-secondary); font-size:13.5px; margin-bottom:16px;">Export user-submitted records as raw JSON or CSV for scientific analysis in Python/R.</p>
+        
+        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:24px;">
+          <button class="btn btn-secondary" id="adminExportJsonBtn" type="button">⬇️ Download JSON</button>
+          <button class="btn btn-secondary" id="adminExportCsvBtn" type="button">📊 Download CSV Table</button>
+          <label class="btn btn-outline" style="cursor:pointer; margin:0;">
+            ⬆️ Import JSON
+            <input type="file" id="adminImportJsonInput" accept=".json" style="display:none;">
+          </label>
+        </div>
+
+        <div style="background:var(--bg-primary); padding:14px; border-radius:var(--radius-sm); font-size:13px;">
+          <strong>Storage Architecture:</strong> Peer-reviewed base dataset is frozen in memory; community contributions are stored in <code>user_contributions.json</code>.
+        </div>
+      </div>
+
+      <!-- Tab 3: Moderation -->
+      <div class="admin-tab-content" id="tab-moderation">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+          <div>
+            <h4 style="font-size:16px; font-weight:700; margin-bottom:2px;">Validate Citizen Observations</h4>
+            <p style="color:var(--text-secondary); font-size:12.5px;">Validate species identification and photographic evidence before observations are added to the scientific dataset.</p>
+          </div>
+          <div class="filter-chip-bar" id="adminModFilterBar" style="margin-bottom:0; padding-bottom:0;">
+            <button class="filter-chip active" data-mod="PENDING">⏳ Pending (<span id="modPendingCount">0</span>)</button>
+            <button class="filter-chip" data-mod="APPROVED">✅ Validated (<span id="modApprovedCount">0</span>)</button>
+            <button class="filter-chip" data-mod="REJECTED">❌ Rejected (<span id="modRejectedCount">0</span>)</button>
+            <button class="filter-chip" data-mod="ALL">All (<span id="modAllCount">0</span>)</button>
+          </div>
+        </div>
+        <div id="adminModerationList" style="display:flex; flex-direction:column; gap:12px; max-height:460px; overflow-y:auto;"></div>
+      </div>
+
+      <!-- Tab 4: API Settings -->
+      <div class="admin-tab-content" id="tab-settings">
+        <h4 style="margin-bottom:8px; font-size:16px;">System Configuration</h4>
+        <p style="color:var(--text-secondary); font-size:13.5px; margin-bottom:14px;">Telemetry endpoints and external weather service configuration.</p>
+        
+        <div style="background:var(--bg-primary); padding:14px; border-radius:var(--radius-sm); font-size:13px; line-height:1.6;">
+          • <strong>Weather Provider:</strong> Open-Meteo High-Resolution Numerical Weather Models (ERA5 / GFS).<br>
+          • <strong>Geocoding:</strong> Open-Meteo Geocoding Engine + BigDataCloud Reverse Geocoder.<br>
+          • <strong>Scientific Corpus:</strong> 36 species (21 Indian Native & Invasive Species), graded across Tiers 1–6.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     JAVASCRIPT LOGIC
+     ========================================================================== -->
+<script>
+(function(){
+
+// ---------------------------------------------------------------
+// 1. DATASET & CONSTANTS
+// ---------------------------------------------------------------
+const RAG_DATA = window.ANT_RAG_DATA || { species: [], chunks: [], metadata: { tiers: {} } };
+const SPECIES = Object.freeze([...(RAG_DATA.species || [])]);
+const BASE_SCIENTIFIC_CHUNKS = Object.freeze([...(RAG_DATA.chunks || [])]);
+const TIERS = { ...((RAG_DATA.metadata && RAG_DATA.metadata.tiers) || {}) };
+
+let userSightings = [];
+let dynamicRAGChunks = [...BASE_SCIENTIFIC_CHUNKS];
+let activeFilter = 'ALL';
+let currentMatches = [];
+let isCurrentLocationInIndia = false;
+let selectedPlace = null;
+let weatherData = null;
+let isAdminAuthenticated = sessionStorage.getItem('flightwatch_admin_auth') === 'true';
+
+const LOCAL_STORAGE_BACKUP_KEY = 'flightwatch_user_contributions_live';
+
+// ---------------------------------------------------------------
+// 2. THEME & NAVIGATION
+// ---------------------------------------------------------------
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+const themeIcon = document.getElementById('themeIcon');
+const htmlEl = document.documentElement;
+
+function initTheme(){
+  const savedTheme = localStorage.getItem('flightwatch_theme') || 'light';
+  htmlEl.setAttribute('data-theme', savedTheme);
+  themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+}
+initTheme();
+
+themeToggleBtn.addEventListener('click', () => {
+  const current = htmlEl.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  htmlEl.setAttribute('data-theme', next);
+  localStorage.setItem('flightwatch_theme', next);
+  themeIcon.textContent = next === 'dark' ? '☀️' : '🌙';
+});
+
+// Logo Home Redirect
+document.getElementById('navLogoBtn').addEventListener('click', () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// ---------------------------------------------------------------
+// 3. ADMIN AUTHENTICATION (praneeth814 / 8142355522)
+// ---------------------------------------------------------------
+const adminAuthBtn = document.getElementById('adminAuthBtn');
+const adminBtnLabel = document.getElementById('adminBtnLabel');
+const adminLoginModal = document.getElementById('adminLoginModal');
+const closeAdminLoginBtn = document.getElementById('closeAdminLoginBtn');
+const adminLoginForm = document.getElementById('adminLoginForm');
+const adminIdInput = document.getElementById('adminIdInput');
+const adminPasswordInput = document.getElementById('adminPasswordInput');
+const adminLoginError = document.getElementById('adminLoginError');
+
+const adminConsoleModal = document.getElementById('adminConsoleModal');
+const closeAdminConsoleBtn = document.getElementById('closeAdminConsoleBtn');
+const adminLogoutBtn = document.getElementById('adminLogoutBtn');
+
+let activeFeedFilter = 'ALL';
+let activeModFilter = 'PENDING';
+
+function updateAdminUI(){
+  if(isAdminAuthenticated){
+    adminBtnLabel.textContent = '🛡️ Admin (praneeth814)';
+    adminAuthBtn.className = 'btn btn-secondary';
+  }else{
+    adminBtnLabel.textContent = 'Admin Login';
+    adminAuthBtn.className = 'btn btn-outline';
+  }
+  renderCommunityFeed();
+}
+updateAdminUI();
+
+adminAuthBtn.addEventListener('click', () => {
+  if(isAdminAuthenticated){
+    openAdminConsole();
+  }else{
+    adminLoginModal.classList.add('show');
+    adminLoginError.style.display = 'none';
+    adminIdInput.value = '';
+    adminPasswordInput.value = '';
+    adminIdInput.focus();
+  }
+});
+
+closeAdminLoginBtn.addEventListener('click', () => adminLoginModal.classList.remove('show'));
+adminLoginModal.addEventListener('click', (e) => { if(e.target === adminLoginModal) adminLoginModal.classList.remove('show'); });
+
+adminLoginForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const u = adminIdInput.value.trim().toLowerCase();
+  const p = adminPasswordInput.value.trim();
+
+  // Admin Credentials: praneeth814 / 8142355522 (and fallback admin/antflight2026)
+  if((u === 'praneeth814' && p === '8142355522') || (u === 'admin' && (p === 'antflight2026' || p === 'admin'))){
+    isAdminAuthenticated = true;
+    sessionStorage.setItem('flightwatch_admin_auth', 'true');
+    adminLoginModal.classList.remove('show');
+    updateAdminUI();
+    openAdminConsole();
+  }else{
+    adminLoginError.textContent = 'Invalid Admin ID or Password.';
+    adminLoginError.style.display = 'block';
+  }
+});
+
+function openAdminConsole(){
+  adminConsoleModal.classList.add('show');
+  renderAdminDatasetTable();
+  renderAdminModerationList();
+}
+
+closeAdminConsoleBtn.addEventListener('click', () => adminConsoleModal.classList.remove('show'));
+adminConsoleModal.addEventListener('click', (e) => { if(e.target === adminConsoleModal) adminConsoleModal.classList.remove('show'); });
+
+adminLogoutBtn.addEventListener('click', () => {
+  isAdminAuthenticated = false;
+  sessionStorage.removeItem('flightwatch_admin_auth');
+  adminConsoleModal.classList.remove('show');
+  updateAdminUI();
+});
+
+// Admin Tab Switching
+document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('show'));
+    btn.classList.add('active');
+    const tabId = btn.getAttribute('data-tab');
+    document.getElementById(tabId).classList.add('show');
+    if(tabId === 'tab-moderation') renderAdminModerationList();
+  });
+});
+
+// Moderation Sub-Filters
+document.querySelectorAll('#adminModFilterBar .filter-chip').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#adminModFilterBar .filter-chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeModFilter = btn.getAttribute('data-mod');
+    renderAdminModerationList();
+  });
+});
+
+// Feed Filter Chips
+document.querySelectorAll('#feedFilterBar .filter-chip').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#feedFilterBar .filter-chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFeedFilter = btn.getAttribute('data-filter');
+    renderCommunityFeed();
+  });
+});
+
+// ---------------------------------------------------------------
+// 4. DATA STORE & VALIDATION LIFECYCLE
+// ---------------------------------------------------------------
+async function loadUserSightings(){
+  try{
+    const res = await fetch('/api/user-contributions', { cache: 'no-store' });
+    if(res.ok){
+      userSightings = await res.json();
+      localStorage.setItem(LOCAL_STORAGE_BACKUP_KEY, JSON.stringify(userSightings));
+    }else{
+      throw new Error('API offline');
+    }
+  }catch(e){
+    try{
+      const raw = localStorage.getItem(LOCAL_STORAGE_BACKUP_KEY);
+      userSightings = raw ? JSON.parse(raw) : [];
+    }catch(err){ userSightings = []; }
+  }
+  syncUserContributionsToRAG();
+}
+
+async function persistUserSightings(newSighting){
+  userSightings.unshift(newSighting);
+  localStorage.setItem(LOCAL_STORAGE_BACKUP_KEY, JSON.stringify(userSightings));
+
+  try{
+    await fetch('/api/user-contributions', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(newSighting)
+    });
+  }catch(err){}
+
+  syncUserContributionsToRAG();
+}
+
+window.validateSighting = async function(id){
+  const target = userSightings.find(s => String(s.id) === String(id));
+  if(target){
+    target.status = 'approved';
+    target.validatedAt = new Date().toISOString();
+    localStorage.setItem(LOCAL_STORAGE_BACKUP_KEY, JSON.stringify(userSightings));
+    try{
+      await fetch(`/api/user-contributions/approve/${id}`, { method: 'POST' });
+    }catch(err){}
+    syncUserContributionsToRAG();
+    renderAdminModerationList();
+  }
+};
+
+window.rejectSighting = async function(id){
+  const target = userSightings.find(s => String(s.id) === String(id));
+  if(target){
+    target.status = 'rejected';
+    localStorage.setItem(LOCAL_STORAGE_BACKUP_KEY, JSON.stringify(userSightings));
+    try{
+      await fetch(`/api/user-contributions/reject/${id}`, { method: 'POST' });
+    }catch(err){}
+    syncUserContributionsToRAG();
+    renderAdminModerationList();
+  }
+};
+
+window.updateSightingSpecies = async function(id, newSpecies){
+  const target = userSightings.find(s => String(s.id) === String(id));
+  if(target){
+    target.species = newSpecies;
+    localStorage.setItem(LOCAL_STORAGE_BACKUP_KEY, JSON.stringify(userSightings));
+    try{
+      await fetch(`/api/user-contributions/${id}`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ species: newSpecies })
+      });
+    }catch(err){}
+    syncUserContributionsToRAG();
+    renderAdminModerationList();
+  }
+};
+
+window.deleteUserSighting = async function(id){
+  if(!confirm('Are you sure you want to permanently delete this observation?')) return;
+  userSightings = userSightings.filter(s => String(s.id) !== String(id));
+  localStorage.setItem(LOCAL_STORAGE_BACKUP_KEY, JSON.stringify(userSightings));
+
+  try{
+    await fetch(`/api/user-contributions/${id}`, { method: 'DELETE' });
+  }catch(err){}
+
+  syncUserContributionsToRAG();
+  renderAdminModerationList();
+};
+
+function updateCounters(){
+  const total = userSightings.length;
+  const pending = userSightings.filter(s => s.status === 'pending' || !s.status).length;
+  const approved = userSightings.filter(s => s.status === 'approved').length;
+  const rejected = userSightings.filter(s => s.status === 'rejected').length;
+
+  const totalEl = document.getElementById('feedTotalCount');
+  if(totalEl) totalEl.textContent = total;
+  const approvedEl = document.getElementById('feedApprovedCount');
+  if(approvedEl) approvedEl.textContent = approved;
+  const pendingEl = document.getElementById('feedPendingCount');
+  if(pendingEl) pendingEl.textContent = pending;
+
+  const modTotalEl = document.getElementById('modAllCount');
+  if(modTotalEl) modTotalEl.textContent = total;
+  const modPendingEl = document.getElementById('modPendingCount');
+  if(modPendingEl) modPendingEl.textContent = pending;
+  const modApprovedEl = document.getElementById('modApprovedCount');
+  if(modApprovedEl) modApprovedEl.textContent = approved;
+  const modRejectedEl = document.getElementById('modRejectedCount');
+  if(modRejectedEl) modRejectedEl.textContent = rejected;
+
+  const adminBadgeCount = document.getElementById('adminContribCount');
+  if(adminBadgeCount) adminBadgeCount.textContent = pending > 0 ? `${pending} pending` : approved;
+}
+
+function syncUserContributionsToRAG(){
+  updateCounters();
+
+  // ONLY APPROVED / VALIDATED SIGHTINGS ARE INTEGRATED INTO SCIENTIFIC RAG DATA
+  const approvedSightings = userSightings.filter(s => s.status === 'approved');
+
+  const userChunks = approvedSightings.map(s => ({
+    id: `CHUNK-USER-${s.id}`,
+    title: `Validated Field Record: ${s.species} in ${s.location}`,
+    tier: 'USER_CONTRIBUTION',
+    speciesName: s.species,
+    content: `Validated Field Observation: ${s.species} confirmed in ${s.location} on ${s.dateTime}. Weather: ${s.weatherSummary || 'Not recorded'}. Notes: ${s.notes || 'None'}. Observer: ${s.author || 'Anonymous'} (Admin Validated).`,
+    keywords: ['user', 'community', 'sighting', 'validated', s.species.toLowerCase(), s.location.toLowerCase(), (s.author||'').toLowerCase()],
+    source: `Field Observation by ${s.author || 'Anonymous'} on ${s.dateTime} [Validated by Admin]`,
+    photo: s.photo
+  }));
+
+  dynamicRAGChunks = [...BASE_SCIENTIFIC_CHUNKS, ...userChunks];
+  renderCommunityFeed();
+}
+
+function renderCommunityFeed(){
+  const grid = document.getElementById('sightingFeedGrid');
+  if(!grid) return;
+  grid.innerHTML = '';
+
+  let list = userSightings;
+  if(activeFeedFilter === 'APPROVED'){
+    list = userSightings.filter(s => s.status === 'approved');
+  }else if(activeFeedFilter === 'PENDING'){
+    list = userSightings.filter(s => s.status === 'pending' || !s.status);
+  }
+
+  if(!list.length){
+    grid.innerHTML = `
+      <div style="grid-column:1/-1; text-align:center; padding:32px 20px; background:var(--bg-surface); border:1px solid var(--border-color); border-radius:var(--radius-md); color:var(--text-secondary);">
+        No observations found in this view. Use <strong>+ Log Sighting</strong> to record queen encounters.
+      </div>
+    `;
+    return;
+  }
+
+  list.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'sighting-item-card';
+
+    const photoHtml = s.photo ?
+      `<div class="sighting-photo-wrap"><img class="sighting-photo-img" src="${s.photo}" alt="${s.species}"></div>` :
+      `<div class="sighting-photo-wrap" style="display:flex; align-items:center; justify-content:center; color:var(--text-tertiary); font-size:13px;">No Photo Attached</div>`;
+
+    let statusBadge = `<span class="sighting-status-badge status-pending">⏳ Pending Validation</span>`;
+    if(s.status === 'approved') statusBadge = `<span class="sighting-status-badge status-approved">🛡️ Validated by Admin</span>`;
+    if(s.status === 'rejected') statusBadge = `<span class="sighting-status-badge status-rejected">❌ Unverified</span>`;
+
+    let adminControls = '';
+    if(isAdminAuthenticated){
+      if(s.status === 'approved'){
+        adminControls = `
+          <button class="btn btn-secondary" style="font-size:11px; padding:3px 8px;" onclick="rejectSighting('${s.id}')">Unvalidate</button>
+          <button class="btn btn-secondary" style="font-size:11px; padding:3px 8px; color:var(--yt-red);" onclick="deleteUserSighting('${s.id}')">Delete</button>
+        `;
+      }else{
+        adminControls = `
+          <button class="btn btn-primary" style="font-size:11px; padding:3px 10px;" onclick="validateSighting('${s.id}')">✅ Validate</button>
+          <button class="btn btn-secondary" style="font-size:11px; padding:3px 8px;" onclick="rejectSighting('${s.id}')">Reject</button>
+          <button class="btn btn-secondary" style="font-size:11px; padding:3px 8px; color:var(--yt-red);" onclick="deleteUserSighting('${s.id}')">Delete</button>
+        `;
+      }
+    }
+
+    card.innerHTML = `
+      ${photoHtml}
+      <div class="sighting-item-body">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:4px;">
+          <h4 class="sighting-item-title" style="margin:0;">
+            <a href="https://www.google.com/search?q=${encodeURIComponent(s.species + ' ant')}" target="_blank" rel="noopener noreferrer" class="species-name-link" style="font-size:16px;" title="Search Google for ${s.species}">
+              <span>${s.species}</span>
+              <svg class="ext-link-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            </a>
+          </h4>
+          ${statusBadge}
+        </div>
+        <div class="sighting-item-sub">📍 ${s.location} · 🕒 ${s.dateTime}</div>
+        ${s.weatherSummary ? `<div class="sighting-weather-tag">☁️ ${s.weatherSummary}</div>` : ''}
+        <div class="sighting-item-notes">"${s.notes || 'No extra notes.'}"</div>
+        <div class="sighting-item-footer">
+          <span>Observer: <strong>${s.author || 'Anonymous'}</strong></span>
+          <div style="display:flex; gap:6px;">${adminControls}</div>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ---------------------------------------------------------------
+// 5. GEOGRAPHY & FORECAST LOGIC
+// ---------------------------------------------------------------
+function isLocationInIndia(place, lat, lon){
+  if(place && place.name){
+    const p = place.name.toLowerCase();
+    if(/\b(india|bharat|bangalore|bengaluru|mumbai|delhi|hyderabad|chennai|kolkata|pune|ahmedabad|kerala|karnataka|tamil nadu|telangana|maharashtra|rajasthan|gujarat|goa|andhra|odisha|west bengal|assam|meghalaya|bihar|punjab|haryana|uttar pradesh|madhya pradesh|kashmir|chandigarh|mysore|coimbatore|kochi|indore|bhopal|nagpur|patna|jaipur|lucknow|surat|visakhapatnam|vadodara|dehradun)\b/i.test(p)){
+      return true;
+    }
+  }
+  return lat >= 6.5 && lat <= 37.5 && lon >= 68.0 && lon <= 97.5;
+}
+
+function detectZone(place, lat, lon){
+  if(isLocationInIndia(place, lat, lon)) return 'SA';
+  if(lat >= 34 && lat <= 72 && lon >= -25 && lon <= 45) return 'EU';
+  if(lat >= 5 && lat <= 72 && lon >= -170 && lon <= -50) return 'NA';
+  return 'GLOBAL';
+}
+
+// Defaults
+const dateInput = document.getElementById('dateInput');
+const timeInput = document.getElementById('timeInput');
+(function initDateDefaults(){
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  dateInput.value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  timeInput.value = `${pad(now.getHours())}:00`;
+})();
+
+// Autocomplete
+const locInput = document.getElementById('locInput');
+const suggestBox = document.getElementById('suggestBox');
+let geoTimer = null;
+
+locInput.addEventListener('input', () => {
+  selectedPlace = null;
+  clearTimeout(geoTimer);
+  const q = locInput.value.trim();
+  if(q.length < 2){ suggestBox.classList.remove('show'); return; }
+  geoTimer = setTimeout(() => fetchGeocode(q, suggestBox, (p) => {
+    selectedPlace = p;
+    locInput.value = p.name;
+    syncMapToPlace(13);
+  }), 250);
+});
+
+async function fetchGeocode(q, boxEl, onSelect){
+  try{
+    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=en&format=json`);
+    const data = await res.json();
+    boxEl.innerHTML = '';
+    if(!data.results || !data.results.length){ boxEl.classList.remove('show'); return; }
+    data.results.forEach(r => {
+      const div = document.createElement('div');
+      div.className = 'suggest-row';
+      const full = [r.name, r.admin1, r.country].filter(Boolean).join(', ');
+      div.textContent = full;
+      div.addEventListener('click', () => {
+        onSelect({name: full, lat: r.latitude, lon: r.longitude});
+        boxEl.classList.remove('show');
+      });
+      boxEl.appendChild(div);
+    });
+    boxEl.classList.add('show');
+  }catch(e){}
+}
+
+document.addEventListener('click', (e) => {
+  if(!suggestBox.contains(e.target) && e.target !== locInput) suggestBox.classList.remove('show');
+  if(modalSuggestBox && !modalSuggestBox.contains(e.target) && e.target !== modalLocInput) modalSuggestBox.classList.remove('show');
+});
+
+// Map Picker
+let leafMap = null;
+let leafMarker = null;
+const mapDrawer = document.getElementById('mapDrawer');
+const coordReadout = document.getElementById('coordReadout');
+
+document.getElementById('mapToggleBtn').addEventListener('click', () => {
+  const isShow = mapDrawer.classList.toggle('show');
+  if(isShow){
+    initMap();
+    setTimeout(() => leafMap && leafMap.invalidateSize(), 60);
+  }
+});
+
+function initMap(){
+  if(leafMap) return;
+  const lat = selectedPlace ? selectedPlace.lat : 20.5937;
+  const lon = selectedPlace ? selectedPlace.lon : 78.9629;
+  leafMap = L.map('mapContainer').setView([lat, lon], selectedPlace ? 12 : 4);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(leafMap);
+
+  if(selectedPlace) placeMapPin(selectedPlace.lat, selectedPlace.lon);
+
+  leafMap.on('click', (e) => {
+    placeMapPin(e.latlng.lat, e.latlng.lng);
+    resolveReverse(e.latlng.lat, e.latlng.lng, (name) => {
+      selectedPlace = { name, lat: e.latlng.lat, lon: e.latlng.lng };
+      locInput.value = name;
+    });
+  });
+}
+
+function placeMapPin(lat, lon){
+  if(leafMarker){ leafMarker.setLatLng([lat, lon]); }
+  else{
+    leafMarker = L.marker([lat, lon], { draggable: true }).addTo(leafMap);
+    leafMarker.on('dragend', () => {
+      const p = leafMarker.getLatLng();
+      resolveReverse(p.lat, p.lng, (name) => {
+        selectedPlace = { name, lat: p.lat, lon: p.lng };
+        locInput.value = name;
+      });
+    });
+  }
+  coordReadout.textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+}
+
+function syncMapToPlace(zoom){
+  if(!selectedPlace) return;
+  if(mapDrawer.classList.contains('show')){
+    initMap();
+    leafMap.setView([selectedPlace.lat, selectedPlace.lon], zoom);
+    placeMapPin(selectedPlace.lat, selectedPlace.lon);
+  }
+}
+
+async function resolveReverse(lat, lon, cb){
+  let label = `Coordinates (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+  try{
+    const r = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
+    const d = await r.json();
+    if(d && (d.city || d.locality)){
+      label = [d.city || d.locality, d.principalSubdivision, d.countryName].filter(Boolean).join(', ');
+    }
+  }catch(e){}
+  cb(label);
+}
+
+document.getElementById('useLocBtn').addEventListener('click', () => {
+  const msg = document.getElementById('searchStatusMsg');
+  if(!navigator.geolocation){ msg.textContent = 'Geolocation not supported.'; return; }
+  msg.textContent = 'Locating GPS…';
+  navigator.geolocation.getCurrentPosition(pos => {
+    const {latitude, longitude} = pos.coords;
+    resolveReverse(latitude, longitude, (name) => {
+      selectedPlace = {name, lat: latitude, lon: longitude};
+      locInput.value = name;
+      msg.textContent = '';
+      syncMapToPlace(14);
+    });
+  }, () => { msg.textContent = 'Could not acquire GPS position.'; });
+});
+
+// Run Check
+document.getElementById('checkConditionsBtn').addEventListener('click', runForecastCheck);
+
+async function runForecastCheck(){
+  const msg = document.getElementById('searchStatusMsg');
+  const btn = document.getElementById('checkConditionsBtn');
+
+  if(!selectedPlace){
+    const q = locInput.value.trim();
+    if(!q){ msg.textContent = 'Please enter a location.'; return; }
+    msg.textContent = 'Resolving location…';
+    try{
+      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=en&format=json`);
+      const data = await res.json();
+      if(!data.results || !data.results.length){ msg.textContent = 'Location not found.'; return; }
+      const r = data.results[0];
+      selectedPlace = {name:[r.name,r.admin1,r.country].filter(Boolean).join(', '), lat:r.latitude, lon:r.longitude};
+    }catch(e){ msg.textContent = 'Geocoding network error.'; return; }
+  }
+
+  btn.disabled = true;
+  msg.textContent = 'Reading atmosphere…';
+
+  try{
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${selectedPlace.lat}&longitude=${selectedPlace.lon}&hourly=temperature_2m,relativehumidity_2m,precipitation,windspeed_10m&daily=precipitation_sum,temperature_2m_max&timezone=auto&past_days=60&forecast_days=16`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('Weather API failed');
+    weatherData = await res.json();
+
+    const targetStr = `${dateInput.value}T${timeInput.value}`;
+    renderForecastDisplay(targetStr);
+    msg.textContent = '';
+  }catch(e){
+    msg.textContent = 'Could not load atmospheric data for this date.';
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+function rainSumBefore(idx, hoursBack){
+  const precip = weatherData.hourly.precipitation;
+  let sum = 0;
+  for(let i = Math.max(0, idx - hoursBack); i <= idx; i++){
+    sum += (precip[i] || 0);
+  }
+  return sum;
+}
+
+function computeIndex(idx){
+  const temp = weatherData.hourly.temperature_2m[idx];
+  const rh = weatherData.hourly.relativehumidity_2m[idx];
+  const wind = weatherData.hourly.windspeed_10m[idx];
+  const rainPast24 = rainSumBefore(idx, 24);
+  const rainNow = weatherData.hourly.precipitation[idx] || 0;
+
+  let score = 0;
+  if(temp >= 20 && temp <= 33) score += 35;
+  else if(temp >= 16 && temp < 20) score += 15;
+  else if(temp > 33 && temp <= 36) score += 15;
+
+  if(rh >= 55 && rh <= 92) score += 25;
+  else if(rh >= 40 && rh < 55) score += 10;
+
+  if(wind < 10) score += 20;
+  else if(wind < 18) score += 8;
+
+  if(rainPast24 > 2 && rainPast24 < 45) score += 20;
+  else if(rainPast24 > 0.2) score += 10;
+  if(rainNow > 1.8) score -= 25;
+
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function getVerdict(score){
+  if(score >= 70) return { label: 'Prime Swarming Probability', cls: 'status-prime' };
+  if(score >= 50) return { label: 'Good Flight Potential', cls: 'status-good' };
+  if(score >= 30) return { label: 'Moderate / Marginal', cls: 'status-possible' };
+  return { label: 'Unlikely Today', cls: 'status-unlikely' };
+}
+
+function matchSpeciesForUI(idx, targetStr, place, lat, lon){
+  isCurrentLocationInIndia = isLocationInIndia(place, lat, lon);
+  const userZone = detectZone(place, lat, lon);
+  const temp = weatherData.hourly.temperature_2m[idx];
+  const rh = weatherData.hourly.relativehumidity_2m[idx];
+  const rainPast48 = rainSumBefore(idx, 48);
+  const rainNow = weatherData.hourly.precipitation[idx] || 0;
+  const wind = weatherData.hourly.windspeed_10m[idx];
+  const hour = parseInt(targetStr.slice(11,13),10);
+  const period = (hour >= 5 && hour < 11) ? 'morning' : (hour >= 11 && hour < 16) ? 'afternoon' : (hour >= 16 && hour < 19) ? 'dusk' : 'evening';
+  let month = parseInt(targetStr.slice(5,7),10);
+  if(lat < 0) month = ((month + 5) % 12) + 1;
+
+  // STRICT REGIONAL FILTER: Only Indian native & established invasive species if location is in India
+  let candidates = SPECIES;
+  if(isCurrentLocationInIndia){
+    candidates = SPECIES.filter(sp => sp.isFoundInIndia === true || sp.zone === 'SA' || sp.zone === 'SA_GLOBAL');
+  }else if(userZone === 'EU'){
+    candidates = SPECIES.filter(sp => sp.zone && (sp.zone.includes('EU') || sp.zone === 'GLOBAL'));
+  }else if(userZone === 'NA'){
+    candidates = SPECIES.filter(sp => sp.zone && (sp.zone.includes('NA') || sp.zone === 'GLOBAL'));
+  }
+
+  return candidates.map(sp => {
+    if(sp.isNonFlying || sp.tier === 'TIER_3'){
+      return { 
+        sp, 
+        score: 0, 
+        totalFactors: 4,
+        pct: 0,
+        isNonFlying: true, 
+        reasons: [{ text: 'Budding / Intranidal strategy (No aerial flight)', hit: false, tramp: true }],
+        probLabel: 'Non-Flying Tramp',
+        probClass: 'prob-0'
+      };
+    }
+
+    let score = 0;
+    const totalFactors = 4;
+    const reasons = [];
+
+    // Factor 1: Seasonality
+    const seasonMet = sp.months && sp.months.includes(month);
+    if(seasonMet){
+      score++;
+      reasons.push({ text: `In Flight Season (Month ${month})`, hit: true });
+    }else{
+      reasons.push({ text: `Off-Season for flight`, hit: false });
+    }
+
+    // Factor 2: Temperature
+    const [tMin, tMax] = sp.tempRange || [18, 34];
+    const tempMet = temp >= tMin && temp <= tMax;
+    if(tempMet){
+      score++;
+      reasons.push({ text: `Ideal Temp: ${temp.toFixed(1)}°C (${tMin}–${tMax}°C)`, hit: true });
+    }else{
+      reasons.push({ text: `Temp ${temp.toFixed(1)}°C outside ${tMin}–${tMax}°C range`, hit: false });
+    }
+
+    // Factor 3: Diurnal Timing
+    const timeMet = sp.timeOfDay && sp.timeOfDay.includes(period);
+    if(timeMet){
+      score++;
+      reasons.push({ text: `Active Diurnal Window (${period})`, hit: true });
+    }else{
+      reasons.push({ text: `Inactive at ${period} (${sp.timeOfDay ? sp.timeOfDay.join('/') : 'other hours'})`, hit: false });
+    }
+
+    // Factor 4: Atmospheric Moisture & Rain Profile
+    let condMet = false;
+    let condDesc = '';
+    switch(sp.condition){
+      case 'after_rain':
+        condMet = (rainPast48 > 2 && rainNow < 2.0);
+        condDesc = condMet ? `Post-Rain Moisture (${rainPast48.toFixed(1)}mm/48h)` : `Needs rain (past 48h was ${rainPast48.toFixed(1)}mm)`;
+        break;
+      case 'humid_still_evening':
+        condMet = (rh >= 50 && wind < 16);
+        condDesc = condMet ? `Humid Calm Air (${Math.round(rh)}% RH, ${wind.toFixed(1)} km/h)` : `Needs humid calm air (current RH ${Math.round(rh)}%)`;
+        break;
+      case 'monsoon_humidity':
+        condMet = (rainPast48 > 1 || rh >= 60);
+        condDesc = condMet ? `Monsoon Moisture (${Math.round(rh)}% RH)` : `Low humidity (${Math.round(rh)}% RH)`;
+        break;
+      case 'warm_calm_afternoon':
+        condMet = (wind < 15 && rh >= 35);
+        condDesc = condMet ? `Calm Daytime Airflow (${wind.toFixed(1)} km/h)` : `Wind/humidity mismatch (${wind.toFixed(1)} km/h)`;
+        break;
+      case 'hot_dry_afternoon':
+        condMet = (rh < 60 && temp >= tMin);
+        condDesc = condMet ? `Warm Dry Afternoon` : `Afternoon humidity/temp mismatch`;
+        break;
+      default:
+        condMet = wind <= (sp.windMax || 15);
+        condDesc = condMet ? `Favorable Wind (<${sp.windMax || 15} km/h)` : `Wind exceeds ${sp.windMax || 15} km/h threshold`;
+        break;
+    }
+    if(condMet) score++;
+    reasons.push({ text: condDesc, hit: condMet });
+
+    const pct = Math.round((score / totalFactors) * 100);
+    let probLabel = 'Unlikely';
+    let probClass = 'prob-0';
+    if(score === 4){ probLabel = 'Prime Match (100%)'; probClass = 'prob-4'; }
+    else if(score === 3){ probLabel = 'High Likelihood (75%)'; probClass = 'prob-3'; }
+    else if(score === 2){ probLabel = 'Moderate Likelihood (50%)'; probClass = 'prob-2'; }
+    else if(score === 1){ probLabel = 'Low Likelihood (25%)'; probClass = 'prob-1'; }
+
+    return { sp, score, totalFactors, pct, reasons, probLabel, probClass };
+  }).sort((a, b) => {
+    // 1. Non-flying tramp species at the bottom
+    if(a.isNonFlying && !b.isNonFlying) return 1;
+    if(!a.isNonFlying && b.isNonFlying) return -1;
+    
+    // 2. Strict Descending order by Score (4 -> 3 -> 2 -> 1 -> 0)
+    if(b.score !== a.score) return b.score - a.score;
+    
+    // 3. Tie-breaker: Optimal temperature closeness
+    const [tMinA, tMaxA] = a.sp.tempRange || [20, 32];
+    const [tMinB, tMaxB] = b.sp.tempRange || [20, 32];
+    const midA = (tMinA + tMaxA) / 2;
+    const midB = (tMinB + tMaxB) / 2;
+    return Math.abs(temp - midA) - Math.abs(temp - midB);
+  });
+}
+
+function renderForecastDisplay(targetStr){
+  const times = weatherData.hourly.time;
+  const targetHourStr = targetStr.slice(0,13) + ':00';
+  let idx = times.indexOf(targetHourStr);
+  if(idx === -1) idx = 0;
+
+  const temp = weatherData.hourly.temperature_2m[idx];
+  const rh = weatherData.hourly.relativehumidity_2m[idx];
+  const wind = weatherData.hourly.windspeed_10m[idx];
+  const rain48 = rainSumBefore(idx, 48);
+  const score = computeIndex(idx);
+  const verdict = getVerdict(score);
+
+  // Readouts
+  document.getElementById('gaugeNum').innerHTML = `${score} <small>/ 100</small>`;
+  document.getElementById('gaugeBarFill').style.width = `${score}%`;
+  const badgeEl = document.getElementById('gaugeBadge');
+  badgeEl.className = `gauge-status-badge ${verdict.cls}`;
+  badgeEl.textContent = verdict.label;
+
+  document.getElementById('tempVal').innerHTML = `${temp.toFixed(1)} <small>°C</small>`;
+  document.getElementById('humidityVal').innerHTML = `${Math.round(rh)} <small>%</small>`;
+  document.getElementById('windVal').innerHTML = `${wind.toFixed(1)} <small>km/h</small>`;
+  document.getElementById('rainVal').innerHTML = `${rain48.toFixed(1)} <small>mm</small>`;
+
+  document.getElementById('resultPlaceBadge').textContent = selectedPlace.name;
+
+  // Regional Scope Banner
+  const scopeBanner = document.getElementById('scopeBanner');
+  if(isLocationInIndia(selectedPlace, selectedPlace.lat, selectedPlace.lon)){
+    scopeBanner.style.display = 'flex';
+    scopeBanner.innerHTML = `
+      <span><strong>🇮🇳 Regional Filter Active:</strong> Showing 21 ant species found in India (Native & Invasive species with nuptial flight documentation). Non-Indian species are excluded.</span>
+      <span>${selectedPlace.name.split(',')[0]}</span>
+    `;
+  }else{
+    scopeBanner.style.display = 'flex';
+    scopeBanner.innerHTML = `
+      <span><strong>🌍 Regional Scope:</strong> Displaying species occurring in ${selectedPlace.name.split(',')[0]} region.</span>
+      <span>${selectedPlace.lat.toFixed(2)}°, ${selectedPlace.lon.toFixed(2)}°</span>
+    `;
+  }
+
+  currentMatches = matchSpeciesForUI(idx, targetStr, selectedPlace, selectedPlace.lat, selectedPlace.lon);
+  renderFilterPills();
+  renderSpeciesCards();
+  renderWindowsTable(idx);
+
+  document.getElementById('resultsSection').classList.add('show');
+}
+
+function renderFilterPills(){
+  const bar = document.getElementById('speciesFilterBar');
+  bar.innerHTML = '';
+
+  let pills = [
+    { key: 'ALL', label: isCurrentLocationInIndia ? '🇮🇳 All Indian Species (Ranked)' : 'All Regional Matches (Ranked)' },
+    { key: 'HIGH', label: '🔥 High Probability (Score 3-4)' },
+    { key: 'INVASIVE', label: '⚠️ Invasive Species in India' },
+    { key: 'TRAMP', label: 'Ground / Non-Flying Queens' }
+  ];
+
+  if(isCurrentLocationInIndia){
+    pills.push({ key: 'MONSOON', label: 'Monsoon Specialists' });
+    pills.push({ key: 'EXOTIC', label: '🌍 View Global/Exotic Species' });
+  }
+
+  pills.forEach(p => {
+    const b = document.createElement('button');
+    b.className = `filter-chip ${activeFilter === p.key ? 'active' : ''}`;
+    b.textContent = p.label;
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#speciesFilterBar .filter-chip').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      activeFilter = p.key;
+      renderSpeciesCards();
+    });
+    bar.appendChild(b);
+  });
+}
+
+function renderSpeciesCards(){
+  const grid = document.getElementById('speciesGrid');
+  grid.innerHTML = '';
+
+  let list = currentMatches;
+  if(activeFilter === 'HIGH'){
+    list = currentMatches.filter(m => m.score >= 3);
+  }else if(activeFilter === 'INVASIVE'){
+    list = currentMatches.filter(m => m.sp.isInvasive || ['TRI-DES','SOL-GEM','NYL-BOU','TET-BIC','PHE-MEG','ANO-GRA','PAR-LON','TAP-MEL','MON-PHA'].includes(m.sp.id));
+  }else if(activeFilter === 'TRAMP'){
+    list = currentMatches.filter(m => m.isNonFlying || m.sp.tier === 'TIER_3');
+  }else if(activeFilter === 'MONSOON'){
+    list = currentMatches.filter(m => m.sp.tier === 'TIER_5');
+  }else if(activeFilter === 'EXOTIC'){
+    list = SPECIES.map(sp => ({ sp, score: 2, totalFactors: 4, pct: 50, probLabel: 'Reference', probClass: 'prob-2', reasons: [{ text: 'Global Reference Species', hit: true }] }));
+  }
+
+  if(!list.length){
+    grid.innerHTML = `<div style="grid-column:1/-1; padding:24px; text-align:center; color:var(--text-secondary); background:var(--bg-surface); border:1px solid var(--border-color); border-radius:var(--radius-md);">No ant species currently meet all active criteria in this category.</div>`;
+    return;
+  }
+
+  list.forEach((m, rankIdx) => {
+    const sp = m.sp;
+    const isTramp = m.isNonFlying || sp.tier === 'TIER_3';
+    const isInvasive = sp.isInvasive || ['TRI-DES','SOL-GEM','NYL-BOU','TET-BIC','PHE-MEG','ANO-GRA','PAR-LON','TAP-MEL','MON-PHA'].includes(sp.id);
+
+    const card = document.createElement('div');
+    card.className = 'species-card';
+
+    const scoreClass = isTramp ? 'score-tramp' : `score-${m.score}`;
+    const scoreBadgeText = isTramp ? 'Non-Flying Strategy' : `Score: ${m.score}/${m.totalFactors} (${m.pct}% Met)`;
+
+    const factorsHtml = (m.reasons || []).map(r => {
+      if(r.hit) return `<span class="factor-pill hit">✓ ${r.text}</span>`;
+      if(r.tramp) return `<span class="factor-pill" style="background:#F3E8FD; color:#7B1FA2;">⚠️ ${r.text}</span>`;
+      return `<span class="factor-pill miss">✗ ${r.text}</span>`;
+    }).join(' ');
+
+    let tagHtml = '';
+    if(isTramp){
+      tagHtml = `<span class="species-tag tag-tramp">Non-Flying Tramp</span>`;
+    }else if(isInvasive){
+      tagHtml = `<span class="species-tag tag-invasive">⚠️ Invasive (India)</span>`;
+    }else if(sp.isFoundInIndia){
+      tagHtml = `<span class="species-tag tag-india">🇮🇳 Native</span>`;
+    }else{
+      tagHtml = `<span class="species-tag">Regional</span>`;
+    }
+
+    card.innerHTML = `
+      <div>
+        <div class="species-card-header">
+          <div style="flex:1;">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:2px;">
+              <a href="https://www.google.com/search?q=${encodeURIComponent(sp.name + ' ' + sp.sci + ' ant')}" target="_blank" rel="noopener noreferrer" class="species-name-link" title="Search Google for ${sp.name} (${sp.sci})">
+                <span>${!isTramp ? `#${rankIdx + 1} ` : ''}${sp.name}</span>
+                <svg class="ext-link-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+              </a>
+              <span class="match-score-pill ${scoreClass}">${scoreBadgeText}</span>
+            </div>
+            <div class="species-sci">
+              <a href="https://www.google.com/search?q=${encodeURIComponent(sp.sci + ' ant')}" target="_blank" rel="noopener noreferrer" class="species-sci-link" title="Search Google for ${sp.sci}">${sp.sci}</a>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+            ${tagHtml}
+            <span class="probability-label ${m.probClass}">${m.probLabel}</span>
+          </div>
+        </div>
+        <div class="factors-wrap">${factorsHtml}</div>
+        <div class="species-notes-box">${sp.notes}</div>
+      </div>
+      <div class="species-source-line">
+        <strong>Citation:</strong> ${sp.source}
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function renderWindowsTable(fromIdx){
+  const times = weatherData.hourly.time;
+  const tbody = document.getElementById('windowsTableBody');
+  tbody.innerHTML = '';
+
+  const candidates = [];
+  for(let i = fromIdx; i < Math.min(fromIdx + 120, times.length); i++){
+    const idx = computeIndex(i);
+    if(idx >= 35) candidates.push({ i, idx, time: times[i] });
+  }
+  candidates.sort((a,b) => b.idx - a.idx);
+
+  const selected = [];
+  const usedDays = new Set();
+  for(const c of candidates){
+    const dKey = c.time.slice(0,10);
+    if(usedDays.has(dKey)) continue;
+    usedDays.add(dKey);
+    selected.push(c);
+    if(selected.length >= 6) break;
+  }
+  selected.sort((a,b) => Date.parse(a.time) - Date.parse(b.time));
+
+  if(!selected.length){
+    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:16px; color:var(--text-secondary);">No elevated swarming windows in upcoming forecast.</td></tr>`;
+    return;
+  }
+
+  selected.forEach(w => {
+    const t = weatherData.hourly.temperature_2m[w.i];
+    const rh = weatherData.hourly.relativehumidity_2m[w.i];
+    const d = new Date(w.time);
+    const dateStr = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    const h = d.getHours();
+    const timeStr = `${h % 12 || 12}:00 ${h >= 12 ? 'PM' : 'AM'}`;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${dateStr}, ${timeStr}</strong></td>
+      <td>${t.toFixed(1)}°C · ${Math.round(rh)}% Humidity</td>
+      <td>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <strong style="color:var(--text-primary);">${w.idx}%</strong>
+          <div style="flex:1; max-width:80px; height:6px; background:var(--bg-secondary); border-radius:3px; overflow:hidden;">
+            <div style="width:${w.idx}%; height:100%; background:var(--yt-red);"></div>
+          </div>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ---------------------------------------------------------------
+// 6. SIGHTING SUBMISSION MODAL
+// ---------------------------------------------------------------
+const uploadModal = document.getElementById('uploadModal');
+const openUploadBtn = document.getElementById('openUploadBtn');
+const openUploadBtn2 = document.getElementById('openUploadBtn2');
+const closeUploadModalBtn = document.getElementById('closeUploadModalBtn');
+const cancelUploadBtn = document.getElementById('cancelUploadBtn');
+const sightingForm = document.getElementById('sightingForm');
+
+const uploadDropzone = document.getElementById('uploadDropzone');
+const photoFileInput = document.getElementById('photoFileInput');
+const dropzonePrompt = document.getElementById('dropzonePrompt');
+const previewWrap = document.getElementById('previewWrap');
+const previewImg = document.getElementById('previewImg');
+const removePhotoBtn = document.getElementById('removePhotoBtn');
+
+const modalLocInput = document.getElementById('modalLocInput');
+const modalSuggestBox = document.getElementById('modalSuggestBox');
+const modalDateInput = document.getElementById('modalDateInput');
+const modalTimeInput = document.getElementById('modalTimeInput');
+const modalSpeciesSelect = document.getElementById('modalSpeciesSelect');
+const modalCustomSpeciesInput = document.getElementById('modalCustomSpeciesInput');
+const modalAuthorInput = document.getElementById('modalAuthorInput');
+const modalNotesInput = document.getElementById('modalNotesInput');
+const modalAutoWeatherCheck = document.getElementById('modalAutoWeatherCheck');
+const saveSightingBtn = document.getElementById('saveSightingBtn');
+
+let currentPhotoBase64 = '';
+
+function populateSpeciesOptions(){
+  const optgroups = modalSpeciesSelect.querySelectorAll('optgroup');
+  if(optgroups.length >= 2){
+    optgroups[0].innerHTML = '';
+    optgroups[1].innerHTML = '';
+    SPECIES.forEach(sp => {
+      const opt = document.createElement('option');
+      const prefix = sp.isInvasive ? '⚠️ [Invasive] ' : '';
+      opt.value = `${sp.name} (${sp.sci})`;
+      opt.textContent = `${prefix}${sp.name} (${sp.sci})`;
+      if(sp.isFoundInIndia) optgroups[0].appendChild(opt);
+      else optgroups[1].appendChild(opt);
+    });
+  }
+}
+populateSpeciesOptions();
+
+modalSpeciesSelect.addEventListener('change', () => {
+  if(modalSpeciesSelect.value === 'CUSTOM'){
+    modalCustomSpeciesInput.style.display = 'block';
+    modalCustomSpeciesInput.required = true;
+    modalCustomSpeciesInput.focus();
+  }else{
+    modalCustomSpeciesInput.style.display = 'none';
+    modalCustomSpeciesInput.required = false;
+  }
+});
+
+function openUploadFlow(){
+  uploadModal.classList.add('show');
+  modalDateInput.value = dateInput.value;
+  modalTimeInput.value = timeInput.value;
+  if(selectedPlace) modalLocInput.value = selectedPlace.name;
+}
+
+openUploadBtn.addEventListener('click', openUploadFlow);
+openUploadBtn2.addEventListener('click', openUploadFlow);
+closeUploadModalBtn.addEventListener('click', () => uploadModal.classList.remove('show'));
+cancelUploadBtn.addEventListener('click', () => uploadModal.classList.remove('show'));
+uploadModal.addEventListener('click', (e) => { if(e.target === uploadModal) uploadModal.classList.remove('show'); });
+
+uploadDropzone.addEventListener('click', () => photoFileInput.click());
+uploadDropzone.addEventListener('dragover', (e) => { e.preventDefault(); uploadDropzone.classList.add('dragover'); });
+uploadDropzone.addEventListener('dragleave', () => uploadDropzone.classList.remove('dragover'));
+uploadDropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadDropzone.classList.remove('dragover');
+  if(e.dataTransfer.files && e.dataTransfer.files[0]) handleImgUpload(e.dataTransfer.files[0]);
+});
+
+photoFileInput.addEventListener('change', (e) => {
+  if(e.target.files && e.target.files[0]) handleImgUpload(e.target.files[0]);
+});
+
+removePhotoBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  currentPhotoBase64 = '';
+  photoFileInput.value = '';
+  previewWrap.classList.remove('show');
+  dropzonePrompt.style.display = 'block';
+});
+
+function handleImgUpload(file){
+  if(!file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxDim = 800;
+      let w = img.width, h = img.height;
+      if(w > maxDim || h > maxDim){
+        if(w > h){ h = Math.round((h * maxDim)/w); w = maxDim; }
+        else{ w = Math.round((w * maxDim)/h); h = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.82);
+      previewImg.src = currentPhotoBase64;
+      dropzonePrompt.style.display = 'none';
+      previewWrap.classList.add('show');
+    };
+    img.src = evt.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+sightingForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if(!currentPhotoBase64){
+    alert('Please attach a queen ant photo for empirical validation.');
+    return;
+  }
+
+  saveSightingBtn.disabled = true;
+  saveSightingBtn.textContent = 'Saving…';
+
+  let spName = modalSpeciesSelect.value;
+  if(spName === 'CUSTOM') spName = modalCustomSpeciesInput.value.trim() || 'Queen Ant';
+
+  let weatherSum = '';
+  const locStr = modalLocInput.value.trim();
+  const dVal = modalDateInput.value;
+  const tVal = modalTimeInput.value;
+
+  if(modalAutoWeatherCheck.checked){
+    try{
+      const lat = selectedPlace ? selectedPlace.lat : 20.0;
+      const lon = selectedPlace ? selectedPlace.lon : 78.0;
+      const wUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,relativehumidity_2m,precipitation,windspeed_10m&timezone=auto&past_days=60&forecast_days=16`;
+      const wRes = await fetch(wUrl);
+      if(wRes.ok){
+        const wData = await wRes.json();
+        const targetStr = `${dVal}T${tVal.slice(0,2)}:00`;
+        const times = wData.hourly.time;
+        let idx = times.indexOf(targetStr);
+        if(idx === -1) idx = times.length - 1;
+        const t = wData.hourly.temperature_2m[idx];
+        const rh = wData.hourly.relativehumidity_2m[idx];
+        weatherSum = `${t.toFixed(1)}°C · ${Math.round(rh)}% Humidity`;
+      }
+    }catch(err){}
+  }
+
+  const newEntry = {
+    id: String(Date.now()),
+    species: spName,
+    location: locStr,
+    lat: selectedPlace ? selectedPlace.lat : 0,
+    lon: selectedPlace ? selectedPlace.lon : 0,
+    dateTime: `${dVal} ${tVal}`,
+    weatherSummary: weatherSum,
+    notes: modalNotesInput.value.trim(),
+    author: modalAuthorInput.value.trim() || 'Anonymous Naturalist',
+    photo: currentPhotoBase64,
+    status: 'pending', // Pending validation by praneeth814
+    tier: 'USER_CONTRIBUTION'
+  };
+
+  await persistUserSightings(newEntry);
+
+  sightingForm.reset();
+  currentPhotoBase64 = '';
+  previewWrap.classList.remove('show');
+  dropzonePrompt.style.display = 'block';
+  modalCustomSpeciesInput.style.display = 'none';
+  saveSightingBtn.disabled = false;
+  saveSightingBtn.textContent = 'Submit Sighting';
+
+  uploadModal.classList.remove('show');
+  alert('Observation logged! It will be reviewed and validated by Admin (praneeth814) before inclusion in the scientific dataset.');
+});
+
+// ---------------------------------------------------------------
+// 7. ADMIN CONSOLE ACTIONS & MODERATION
+// ---------------------------------------------------------------
+const adminSearchDataset = document.getElementById('adminSearchDataset');
+const adminFilterTier = document.getElementById('adminFilterTier');
+const adminDatasetTableBody = document.getElementById('adminDatasetTableBody');
+
+adminSearchDataset.addEventListener('input', renderAdminDatasetTable);
+adminFilterTier.addEventListener('change', renderAdminDatasetTable);
+
+function renderAdminDatasetTable(){
+  const q = adminSearchDataset.value.toLowerCase().trim();
+  const tF = adminFilterTier.value;
+  adminDatasetTableBody.innerHTML = '';
+
+  const matched = SPECIES.filter(s => {
+    if(tF === 'INDIA' && !s.isFoundInIndia) return false;
+    if(tF === 'INVASIVE' && !s.isInvasive && !['TRI-DES','SOL-GEM','NYL-BOU','TET-BIC','PHE-MEG','ANO-GRA','PAR-LON','TAP-MEL','MON-PHA'].includes(s.id)) return false;
+    if(tF !== 'ALL' && tF !== 'INDIA' && tF !== 'INVASIVE' && s.tier !== tF) return false;
+    if(!q) return true;
+    return `${s.name} ${s.sci} ${s.region} ${s.source}`.toLowerCase().includes(q);
+  });
+
+  matched.forEach(s => {
+    const isInvasive = s.isInvasive || ['TRI-DES','SOL-GEM','NYL-BOU','TET-BIC','PHE-MEG','ANO-GRA','PAR-LON','TAP-MEL','MON-PHA'].includes(s.id);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>
+        <strong>
+          <a href="https://www.google.com/search?q=${encodeURIComponent(s.name + ' ' + s.sci + ' ant')}" target="_blank" rel="noopener noreferrer" class="species-name-link" style="font-size:13.5px;" title="Search Google for ${s.name}">
+            <span>${s.name}</span>
+            <svg class="ext-link-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+          </a>
+        </strong><br>
+        <em><a href="https://www.google.com/search?q=${encodeURIComponent(s.sci + ' ant')}" target="_blank" rel="noopener noreferrer" class="species-sci-link" title="Search Google for ${s.sci}">${s.sci}</a></em>
+      </td>
+      <td>${s.region} ${s.isFoundInIndia ? (isInvasive ? '<br><span style="color:#C5221F; font-weight:600;">⚠️ Invasive (India Range)</span>' : '<br><span style="color:var(--accent-green); font-weight:600;">🇮🇳 India Range</span>') : ''}</td>
+      <td><strong>Temp:</strong> ${s.tempText}<br><strong>Humidity:</strong> ${s.humidityText}<br><strong>Rain:</strong> ${s.rainfallPattern}</td>
+      <td style="font-size:11.5px; color:var(--text-secondary);">${s.source}</td>
+    `;
+    adminDatasetTableBody.appendChild(tr);
+  });
+}
+
+function renderAdminModerationList(){
+  const list = document.getElementById('adminModerationList');
+  if(!list) return;
+  list.innerHTML = '';
+
+  updateCounters();
+
+  let filtered = userSightings;
+  if(activeModFilter === 'PENDING'){
+    filtered = userSightings.filter(s => s.status === 'pending' || !s.status);
+  }else if(activeModFilter === 'APPROVED'){
+    filtered = userSightings.filter(s => s.status === 'approved');
+  }else if(activeModFilter === 'REJECTED'){
+    filtered = userSightings.filter(s => s.status === 'rejected');
+  }
+
+  if(!filtered.length){
+    list.innerHTML = `<div style="text-align:center; padding:28px; color:var(--text-secondary); background:var(--bg-secondary); border-radius:var(--radius-sm);">No observations matching the "${activeModFilter}" filter.</div>`;
+    return;
+  }
+
+  filtered.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'mod-item-card';
+
+    const statusPill = s.status === 'approved' ?
+      `<span class="sighting-status-badge status-approved">✅ Validated</span>` :
+      (s.status === 'rejected' ? `<span class="sighting-status-badge status-rejected">❌ Rejected</span>` : `<span class="sighting-status-badge status-pending">⏳ Pending Validation</span>`);
+
+    const imgHtml = s.photo ?
+      `<img class="mod-thumb-img" src="${s.photo}" alt="${s.species}" onclick="window.open('${s.photo}')" title="Click to view full photo" style="cursor:zoom-in;">` :
+      `<div class="mod-thumb-img" style="display:flex; align-items:center; justify-content:center; color:var(--text-tertiary); font-size:11px;">No Photo</div>`;
+
+    // Species options for quick correction
+    const speciesOptionsHtml = SPECIES.map(sp =>
+      `<option value="${sp.name} (${sp.sci})" ${s.species.includes(sp.name) || s.species.includes(sp.sci) ? 'selected' : ''}>${sp.isInvasive ? '⚠️ ' : ''}${sp.name} (${sp.sci})</option>`
+    ).join('');
+
+    card.innerHTML = `
+      ${imgHtml}
+      <div class="mod-body">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:6px;">
+          <div>
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <a href="https://www.google.com/search?q=${encodeURIComponent(s.species + ' ant')}" target="_blank" rel="noopener noreferrer" class="species-name-link" style="font-size:15px;" title="Search Google for ${s.species}">
+                <span>${s.species}</span>
+                <svg class="ext-link-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+              </a>
+            </div>
+            <div style="font-size:12.5px; color:var(--text-secondary); margin-top:2px;">📍 ${s.location} · 🕒 ${s.dateTime}</div>
+          </div>
+          ${statusPill}
+        </div>
+
+        <div style="font-size:12.5px; background:var(--bg-surface); padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--border-color); margin-bottom:8px;">
+          ${s.weatherSummary ? `<strong>Weather:</strong> ${s.weatherSummary}<br>` : ''}
+          <strong>Notes:</strong> "${s.notes || 'No field notes provided.'}"<br>
+          <span style="font-size:11px; color:var(--text-tertiary);">Observer: ${s.author || 'Anonymous'} · ID: ${s.id}</span>
+        </div>
+
+        <!-- Inline Species Correction -->
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <span style="font-size:11.5px; font-weight:600; color:var(--text-secondary); white-space:nowrap;">Correct ID:</span>
+          <select class="input-field" style="height:32px; font-size:12.5px; padding:2px 8px;" onchange="updateSightingSpecies('${s.id}', this.value)">
+            ${speciesOptionsHtml}
+          </select>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mod-actions-row">
+          ${s.status !== 'approved' ? `<button class="btn btn-primary" style="font-size:12px; padding:4px 12px;" onclick="validateSighting('${s.id}')">✅ Validate & Add to Scientific Dataset</button>` : ''}
+          ${s.status !== 'rejected' ? `<button class="btn btn-secondary" style="font-size:12px; padding:4px 10px;" onclick="rejectSighting('${s.id}')">❌ Reject</button>` : ''}
+          <button class="btn btn-secondary" style="font-size:12px; padding:4px 10px; color:var(--yt-red);" onclick="deleteUserSighting('${s.id}')">🗑️ Delete</button>
+        </div>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+// Exports
+document.getElementById('adminExportJsonBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(userSightings, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `user_contributions_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+});
+
+document.getElementById('adminExportCsvBtn').addEventListener('click', () => {
+  const headers = ['ID', 'Species', 'Location', 'Latitude', 'Longitude', 'Date_Time', 'Weather_Summary', 'Notes', 'Author', 'Status'];
+  const rows = userSightings.map(s => [
+    `"${s.id}"`, `"${(s.species||'').replace(/"/g,'""')}"`, `"${(s.location||'').replace(/"/g,'""')}"`,
+    s.lat||'', s.lon||'', `"${s.dateTime||''}"`, `"${(s.weatherSummary||'').replace(/"/g,'""')}"`,
+    `"${(s.notes||'').replace(/"/g,'""')}"`, `"${(s.author||'').replace(/"/g,'""')}"`,
+    `"${s.status||'pending'}"`
+  ]);
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = `user_contributions_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+});
+
+document.getElementById('adminImportJsonInput').addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async (evt) => {
+    try{
+      const data = JSON.parse(evt.target.result);
+      if(Array.isArray(data)){
+        userSightings = data;
+        localStorage.setItem(LOCAL_STORAGE_BACKUP_KEY, JSON.stringify(userSightings));
+        syncUserContributionsToRAG();
+        renderAdminModerationList();
+        alert(`Imported ${data.length} records.`);
+      }
+    }catch(err){ alert('Invalid JSON file.'); }
+  };
+  reader.readAsText(file);
+});
+
+// Initial load
+loadUserSightings();
+
+})();
+</script>
+</body>
+</html>
