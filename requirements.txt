@@ -1,0 +1,2 @@
+# Ant Flight Tracker - Python standard library only
+# No external pip dependencies required
