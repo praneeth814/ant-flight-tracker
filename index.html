@@ -1343,19 +1343,25 @@ body {
 
       <!-- Tab 1: Dataset Explorer -->
       <div class="admin-tab-content show" id="tab-dataset">
-        <div style="display:flex; gap:10px; margin-bottom:14px;">
-          <input class="input-field" id="adminSearchDataset" type="text" placeholder="Search 36 peer-reviewed species, citations, or regions…">
-          <select class="input-field" id="adminFilterTier" style="width:200px;">
-            <option value="ALL">All Records (36)</option>
-            <option value="INDIA">🇮🇳 India Species (21)</option>
-            <option value="INVASIVE">⚠️ Invasive Species in India</option>
-            <option value="TIER_1">Tier 1 · Quantified</option>
-            <option value="TIER_2">Tier 2 · Documented</option>
-            <option value="TIER_3">Tier 3 · Non-Flying</option>
-            <option value="TIER_4">Tier 4 · Citizen Science</option>
-            <option value="TIER_5">Tier 5 · Monsoon Biology</option>
-            <option value="TIER_6">Tier 6 · Predicted</option>
-          </select>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
+          <div style="display:flex; gap:10px; flex:1; min-width:280px;">
+            <input class="input-field" id="adminSearchDataset" type="text" placeholder="Search peer-reviewed & custom species, citations, or regions…">
+            <select class="input-field" id="adminFilterTier" style="width:210px;">
+              <option value="ALL">All Records</option>
+              <option value="INDIA">🇮🇳 India Species</option>
+              <option value="INVASIVE">⚠️ Invasive Species</option>
+              <option value="CUSTOM">👑 Custom Added Species</option>
+              <option value="TIER_1">Tier 1 · Quantified</option>
+              <option value="TIER_2">Tier 2 · Documented</option>
+              <option value="TIER_3">Tier 3 · Non-Flying</option>
+              <option value="TIER_4">Tier 4 · Citizen Science</option>
+              <option value="TIER_5">Tier 5 · Monsoon Biology</option>
+              <option value="TIER_6">Tier 6 · Predicted</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" id="openAddSpeciesBtn" type="button" style="font-size:13px; padding:7px 16px;">
+            + Add New Species
+          </button>
         </div>
         <div style="max-height:420px; overflow-y:auto;">
           <table class="admin-table">
@@ -1364,7 +1370,7 @@ body {
                 <th>Species</th>
                 <th>Range & Status</th>
                 <th>Weather Trigger Profile</th>
-                <th>Literature Citation</th>
+                <th>Literature Citation / Actions</th>
               </tr>
             </thead>
             <tbody id="adminDatasetTableBody"></tbody>
@@ -1387,7 +1393,7 @@ body {
         </div>
 
         <div style="background:var(--bg-primary); padding:14px; border-radius:var(--radius-sm); font-size:13px;">
-          <strong>Storage Architecture:</strong> Peer-reviewed base dataset is frozen in memory; community contributions are stored in <code>user_contributions.json</code>.
+          <strong>Storage Architecture:</strong> Peer-reviewed base dataset is frozen in memory; community contributions are stored in <code>user_contributions.json</code>; custom species are preserved in <code>custom_species.json</code>.
         </div>
       </div>
 
@@ -1416,9 +1422,183 @@ body {
         <div style="background:var(--bg-primary); padding:14px; border-radius:var(--radius-sm); font-size:13px; line-height:1.6;">
           • <strong>Weather Provider:</strong> Open-Meteo High-Resolution Numerical Weather Models (ERA5 / GFS).<br>
           • <strong>Geocoding:</strong> Open-Meteo Geocoding Engine + BigDataCloud Reverse Geocoder.<br>
-          • <strong>Scientific Corpus:</strong> 36 species (21 Indian Native & Invasive Species), graded across Tiers 1–6.
+          • <strong>Scientific Corpus:</strong> Peer-reviewed species + Custom Admin Registry, graded across Tiers 1–6.
         </div>
       </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- D. Admin Add New Species Modal -->
+<div class="modal-backdrop" id="adminAddSpeciesModal" style="z-index:2100;">
+  <div class="modal-dialog" style="max-width:650px;">
+    <div class="modal-header-bar">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <h3 class="modal-header-title">Add New Ant Species</h3>
+        <span class="admin-badge">Admin Registry</span>
+      </div>
+      <button class="modal-close-icon" id="closeAddSpeciesBtn">&times;</button>
+    </div>
+    <div class="modal-content-area">
+      <form id="adminAddSpeciesForm">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+          <div class="input-group">
+            <div class="input-label">Common Name *</div>
+            <input class="input-field" id="newSpeciesName" type="text" placeholder="e.g. Asian Weaver Ant" required>
+          </div>
+          <div class="input-group">
+            <div class="input-label">Scientific Binomial *</div>
+            <input class="input-field" id="newSpeciesSci" type="text" placeholder="e.g. Oecophylla smaragdina" required>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+          <div class="input-group">
+            <div class="input-label">Geographic Region / Habitat *</div>
+            <input class="input-field" id="newSpeciesRegion" type="text" placeholder="e.g. India & South Asia canopy" required>
+          </div>
+          <div class="input-group">
+            <div class="input-label">Scientific Tier</div>
+            <select class="input-field" id="newSpeciesTier">
+              <option value="TIER_1">Tier 1 · Quantified Field Data</option>
+              <option value="TIER_2" selected>Tier 2 · Documented Qualitative Pattern</option>
+              <option value="TIER_3">Tier 3 · Non-Flying / Intranidal</option>
+              <option value="TIER_4">Tier 4 · Citizen Science</option>
+              <option value="TIER_5">Tier 5 · Monsoon Biology</option>
+              <option value="TIER_6">Tier 6 · Predicted</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:20px; align-items:center; margin-bottom:14px; padding:10px 12px; background:var(--bg-secondary); border-radius:var(--radius-sm);">
+          <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer;">
+            <input type="checkbox" id="newSpeciesIsIndia" checked>
+            <span>🇮🇳 Found in India</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer;">
+            <input type="checkbox" id="newSpeciesIsInvasive">
+            <span>⚠️ Invasive Tramp Species</span>
+          </label>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+          <div class="input-group">
+            <div class="input-label">Optimal Temp Range (°C)</div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <input class="input-field" id="newSpeciesTempMin" type="number" step="0.5" value="25" placeholder="Min" style="width:50%;">
+              <span>–</span>
+              <input class="input-field" id="newSpeciesTempMax" type="number" step="0.5" value="35" placeholder="Max" style="width:50%;">
+            </div>
+          </div>
+          <div class="input-group">
+            <div class="input-label">Optimal Humidity Range (%)</div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <input class="input-field" id="newSpeciesHumMin" type="number" step="1" value="60" placeholder="Min" style="width:50%;">
+              <span>–</span>
+              <input class="input-field" id="newSpeciesHumMax" type="number" step="1" value="95" placeholder="Max" style="width:50%;">
+            </div>
+          </div>
+        </div>
+
+        <div class="input-group" style="margin-bottom:12px;">
+          <div class="input-label">Rainfall Trigger Pattern</div>
+          <input class="input-field" id="newSpeciesRain" type="text" placeholder="e.g. Within 24-48h after first pre-monsoon showers">
+        </div>
+
+        <div class="input-group" style="margin-bottom:12px;">
+          <div class="input-label">Flight Window & Timing</div>
+          <input class="input-field" id="newSpeciesTiming" type="text" placeholder="e.g. May–July, late afternoon 16:00–19:00">
+        </div>
+
+        <div class="input-group" style="margin-bottom:18px;">
+          <div class="input-label">Literature Citation / Source</div>
+          <input class="input-field" id="newSpeciesSource" type="text" placeholder="e.g. Admin field record or Published research citation">
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button class="btn btn-secondary" id="cancelAddSpeciesBtn" type="button">Cancel</button>
+          <button class="btn btn-primary" type="submit">Save & Add Species</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- E. Admin Edit Sighting Modal -->
+<div class="modal-backdrop" id="adminEditSightingModal" style="z-index:2100;">
+  <div class="modal-dialog" style="max-width:580px;">
+    <div class="modal-header-bar">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <h3 class="modal-header-title">Edit Observation</h3>
+        <span class="admin-badge" id="editSightingIdBadge">ID</span>
+      </div>
+      <button class="modal-close-icon" id="closeEditSightingBtn">&times;</button>
+    </div>
+    <div class="modal-content-area">
+      <form id="adminEditSightingForm">
+        <input type="hidden" id="editSightingId">
+        
+        <div class="input-group" style="margin-bottom:12px;">
+          <div class="input-label">Species Identification</div>
+          <select class="input-field" id="editSightingSpeciesSelect"></select>
+          <input class="input-field" id="editSightingCustomSpecies" type="text" placeholder="Custom species name…" style="display:none; margin-top:6px;">
+        </div>
+
+        <div class="input-group" style="margin-bottom:12px;">
+          <div class="input-label">Location Found</div>
+          <input class="input-field" id="editSightingLocation" type="text" required>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+          <div class="input-group">
+            <div class="input-label">Latitude</div>
+            <input class="input-field" id="editSightingLat" type="number" step="0.0001">
+          </div>
+          <div class="input-group">
+            <div class="input-label">Longitude</div>
+            <input class="input-field" id="editSightingLon" type="number" step="0.0001">
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+          <div class="input-group">
+            <div class="input-label">Date & Time</div>
+            <input class="input-field" id="editSightingDateTime" type="text" placeholder="YYYY-MM-DD HH:MM">
+          </div>
+          <div class="input-group">
+            <div class="input-label">Validation Status</div>
+            <select class="input-field" id="editSightingStatus">
+              <option value="approved">🛡️ Approved & Validated</option>
+              <option value="pending">⏳ Pending Validation</option>
+              <option value="rejected">❌ Rejected / Unverified</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="input-group" style="margin-bottom:12px;">
+          <div class="input-label">Weather Summary</div>
+          <input class="input-field" id="editSightingWeather" type="text" placeholder="e.g. 28.5°C · 75% Humidity">
+        </div>
+
+        <div class="input-group" style="margin-bottom:12px;">
+          <div class="input-label">Observer Name / Handle</div>
+          <input class="input-field" id="editSightingAuthor" type="text">
+        </div>
+
+        <div class="input-group" style="margin-bottom:18px;">
+          <div class="input-label">Field Notes / Habitat</div>
+          <textarea class="input-field" id="editSightingNotes" rows="2" style="height:auto; padding:8px 12px;"></textarea>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button class="btn btn-secondary" id="cancelEditSightingBtn" type="button">Cancel</button>
+          <button class="btn btn-primary" type="submit">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
     </div>
   </div>
@@ -1434,10 +1614,12 @@ body {
 // 1. DATASET & CONSTANTS
 // ---------------------------------------------------------------
 const RAG_DATA = window.ANT_RAG_DATA || { species: [], chunks: [], metadata: { tiers: {} } };
-const SPECIES = Object.freeze([...(RAG_DATA.species || [])]);
+const BASE_SCIENTIFIC_SPECIES = Object.freeze([...(RAG_DATA.species || [])]);
 const BASE_SCIENTIFIC_CHUNKS = Object.freeze([...(RAG_DATA.chunks || [])]);
 const TIERS = { ...((RAG_DATA.metadata && RAG_DATA.metadata.tiers) || {}) };
 
+let customSpeciesList = [];
+let SPECIES = [...BASE_SCIENTIFIC_SPECIES];
 let userSightings = [];
 let dynamicRAGChunks = [...BASE_SCIENTIFIC_CHUNKS];
 let activeFilter = 'ALL';
@@ -1445,9 +1627,10 @@ let currentMatches = [];
 let isCurrentLocationInIndia = false;
 let selectedPlace = null;
 let weatherData = null;
-let isAdminAuthenticated = sessionStorage.getItem('flightwatch_admin_auth') === 'true';
+let isAdminAuthenticated = localStorage.getItem('flightwatch_admin_auth') === 'true' || sessionStorage.getItem('flightwatch_admin_auth') === 'true';
 
 const LOCAL_STORAGE_BACKUP_KEY = 'flightwatch_user_contributions_live';
+const LOCAL_STORAGE_CUSTOM_SPECIES_KEY = 'flightwatch_custom_species_live';
 
 // ---------------------------------------------------------------
 // 2. THEME & NAVIGATION
@@ -1493,7 +1676,7 @@ const closeAdminConsoleBtn = document.getElementById('closeAdminConsoleBtn');
 const adminLogoutBtn = document.getElementById('adminLogoutBtn');
 
 let activeFeedFilter = 'ALL';
-let activeModFilter = 'PENDING';
+let activeModFilter = 'ALL';
 
 function updateAdminUI(){
   if(isAdminAuthenticated){
@@ -1530,6 +1713,7 @@ adminLoginForm.addEventListener('submit', (e) => {
   // Admin Credentials: praneeth814 / 8142355522 (and fallback admin/antflight2026)
   if((u === 'praneeth814' && p === '8142355522') || (u === 'admin' && (p === 'antflight2026' || p === 'admin'))){
     isAdminAuthenticated = true;
+    localStorage.setItem('flightwatch_admin_auth', 'true');
     sessionStorage.setItem('flightwatch_admin_auth', 'true');
     adminLoginModal.classList.remove('show');
     updateAdminUI();
@@ -1551,6 +1735,7 @@ adminConsoleModal.addEventListener('click', (e) => { if(e.target === adminConsol
 
 adminLogoutBtn.addEventListener('click', () => {
   isAdminAuthenticated = false;
+  localStorage.removeItem('flightwatch_admin_auth');
   sessionStorage.removeItem('flightwatch_admin_auth');
   adminConsoleModal.classList.remove('show');
   updateAdminUI();
@@ -1565,6 +1750,7 @@ document.querySelectorAll('.admin-tab-btn').forEach(btn => {
     const tabId = btn.getAttribute('data-tab');
     document.getElementById(tabId).classList.add('show');
     if(tabId === 'tab-moderation') renderAdminModerationList();
+    if(tabId === 'tab-dataset') renderAdminDatasetTable();
   });
 });
 
@@ -1591,22 +1777,110 @@ document.querySelectorAll('#feedFilterBar .filter-chip').forEach(btn => {
 // ---------------------------------------------------------------
 // 4. DATA STORE & VALIDATION LIFECYCLE
 // ---------------------------------------------------------------
+async function loadCustomSpecies(){
+  let localCustom = [];
+  try{
+    const raw = localStorage.getItem(LOCAL_STORAGE_CUSTOM_SPECIES_KEY);
+    if(raw) localCustom = JSON.parse(raw);
+  }catch(e){ localCustom = []; }
+
+  let serverCustom = [];
+  let serverOnline = false;
+  try{
+    const res = await fetch('/api/custom-species', { cache: 'no-store' });
+    if(res.ok){
+      serverCustom = await res.json();
+      serverOnline = true;
+    }
+  }catch(e){}
+
+  const mergedMap = new Map();
+  if(Array.isArray(serverCustom)){
+    serverCustom.forEach(sp => { if(sp && sp.id) mergedMap.set(String(sp.id), sp); });
+  }
+  if(Array.isArray(localCustom)){
+    localCustom.forEach(sp => {
+      if(!sp || !sp.id) return;
+      if(!mergedMap.has(String(sp.id))){
+        mergedMap.set(String(sp.id), sp);
+        if(serverOnline){
+          fetch('/api/custom-species', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(sp)
+          }).catch(()=>{});
+        }
+      }
+    });
+  }
+
+  customSpeciesList = Array.from(mergedMap.values());
+  localStorage.setItem(LOCAL_STORAGE_CUSTOM_SPECIES_KEY, JSON.stringify(customSpeciesList));
+  rebuildSpeciesDataset();
+}
+
+function rebuildSpeciesDataset(){
+  SPECIES = [...BASE_SCIENTIFIC_SPECIES, ...customSpeciesList];
+  populateSpeciesOptions();
+  renderAdminDatasetTable();
+}
+
+window.deleteCustomSpecies = async function(id){
+  if(!confirm('Are you sure you want to remove this custom species?')) return;
+  customSpeciesList = customSpeciesList.filter(s => String(s.id) !== String(id));
+  localStorage.setItem(LOCAL_STORAGE_CUSTOM_SPECIES_KEY, JSON.stringify(customSpeciesList));
+  try{
+    await fetch(`/api/custom-species/${id}`, { method: 'DELETE' });
+  }catch(e){}
+  rebuildSpeciesDataset();
+};
+
 async function loadUserSightings(){
+  let localList = [];
+  try{
+    const raw = localStorage.getItem(LOCAL_STORAGE_BACKUP_KEY);
+    if(raw) localList = JSON.parse(raw);
+  }catch(e){ localList = []; }
+
+  let serverList = [];
+  let serverOnline = false;
   try{
     const res = await fetch('/api/user-contributions', { cache: 'no-store' });
     if(res.ok){
-      userSightings = await res.json();
-      localStorage.setItem(LOCAL_STORAGE_BACKUP_KEY, JSON.stringify(userSightings));
-    }else{
-      throw new Error('API offline');
+      serverList = await res.json();
+      serverOnline = true;
     }
-  }catch(e){
-    try{
-      const raw = localStorage.getItem(LOCAL_STORAGE_BACKUP_KEY);
-      userSightings = raw ? JSON.parse(raw) : [];
-    }catch(err){ userSightings = []; }
+  }catch(e){}
+
+  const mergedMap = new Map();
+  if(Array.isArray(serverList)){
+    serverList.forEach(item => { if(item && item.id) mergedMap.set(String(item.id), item); });
   }
+  if(Array.isArray(localList)){
+    localList.forEach(localItem => {
+      if(!localItem || !localItem.id) return;
+      const existing = mergedMap.get(String(localItem.id));
+      if(!existing){
+        mergedMap.set(String(localItem.id), localItem);
+        if(serverOnline){
+          fetch('/api/user-contributions', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(localItem)
+          }).catch(()=>{});
+        }
+      } else {
+        if(localItem.status === 'approved' && existing.status !== 'approved'){
+          mergedMap.set(String(localItem.id), { ...existing, status: 'approved' });
+        }
+      }
+    });
+  }
+
+  userSightings = Array.from(mergedMap.values());
+  localStorage.setItem(LOCAL_STORAGE_BACKUP_KEY, JSON.stringify(userSightings));
   syncUserContributionsToRAG();
+  renderAdminModerationList();
 }
 
 async function persistUserSightings(newSighting){
@@ -1622,6 +1896,7 @@ async function persistUserSightings(newSighting){
   }catch(err){}
 
   syncUserContributionsToRAG();
+  renderAdminModerationList();
 }
 
 window.validateSighting = async function(id){
@@ -1763,18 +2038,15 @@ function renderCommunityFeed(){
 
     let adminControls = '';
     if(isAdminAuthenticated){
-      if(s.status === 'approved'){
-        adminControls = `
-          <button class="btn btn-secondary" style="font-size:11px; padding:3px 8px;" onclick="rejectSighting('${s.id}')">Unvalidate</button>
-          <button class="btn btn-secondary" style="font-size:11px; padding:3px 8px; color:var(--yt-red);" onclick="deleteUserSighting('${s.id}')">Delete</button>
-        `;
-      }else{
-        adminControls = `
-          <button class="btn btn-primary" style="font-size:11px; padding:3px 10px;" onclick="validateSighting('${s.id}')">✅ Validate</button>
-          <button class="btn btn-secondary" style="font-size:11px; padding:3px 8px;" onclick="rejectSighting('${s.id}')">Reject</button>
-          <button class="btn btn-secondary" style="font-size:11px; padding:3px 8px; color:var(--yt-red);" onclick="deleteUserSighting('${s.id}')">Delete</button>
-        `;
-      }
+      let statusBtn = s.status === 'approved' ?
+        `<button class="btn btn-secondary" style="font-size:11px; padding:3px 8px;" onclick="rejectSighting('${s.id}')">Unvalidate</button>` :
+        `<button class="btn btn-primary" style="font-size:11px; padding:3px 8px;" onclick="validateSighting('${s.id}')">✅ Validate</button>`;
+      
+      adminControls = `
+        ${statusBtn}
+        <button class="btn btn-secondary" style="font-size:11px; padding:3px 8px;" onclick="openEditSightingModal('${s.id}')">✏️ Edit</button>
+        <button class="btn btn-secondary" style="font-size:11px; padding:3px 8px; color:var(--yt-red);" onclick="deleteUserSighting('${s.id}')">Delete</button>
+      `;
     }
 
     card.innerHTML = `
@@ -2741,7 +3013,8 @@ function renderAdminDatasetTable(){
   const matched = SPECIES.filter(s => {
     if(tF === 'INDIA' && !s.isFoundInIndia) return false;
     if(tF === 'INVASIVE' && !s.isInvasive && !['TRI-DES','SOL-GEM','NYL-BOU','TET-BIC','PHE-MEG','ANO-GRA','PAR-LON','TAP-MEL','MON-PHA'].includes(s.id)) return false;
-    if(tF !== 'ALL' && tF !== 'INDIA' && tF !== 'INVASIVE' && s.tier !== tF) return false;
+    if(tF === 'CUSTOM' && !s.isCustom) return false;
+    if(tF !== 'ALL' && tF !== 'INDIA' && tF !== 'INVASIVE' && tF !== 'CUSTOM' && s.tier !== tF) return false;
     if(!q) return true;
     return `${s.name} ${s.sci} ${s.region} ${s.source}`.toLowerCase().includes(q);
   });
@@ -2749,6 +3022,18 @@ function renderAdminDatasetTable(){
   matched.forEach(s => {
     const isInvasive = s.isInvasive || ['TRI-DES','SOL-GEM','NYL-BOU','TET-BIC','PHE-MEG','ANO-GRA','PAR-LON','TAP-MEL','MON-PHA'].includes(s.id);
     const tr = document.createElement('tr');
+
+    let actionsHtml = `<span style="font-size:11.5px; color:var(--text-secondary);">${s.source}</span>`;
+    if(s.isCustom){
+      actionsHtml = `
+        <div style="display:flex; flex-direction:column; gap:4px;">
+          <span style="font-size:11px; background:var(--accent-amber-bg); color:var(--accent-amber); font-weight:600; padding:2px 6px; border-radius:4px; display:inline-block; width:fit-content;">👑 Custom (Admin)</span>
+          <span style="font-size:11.5px; color:var(--text-secondary);">${s.source}</span>
+          <button class="btn btn-secondary" style="font-size:11px; padding:2px 8px; color:var(--yt-red); width:fit-content;" onclick="deleteCustomSpecies('${s.id}')">🗑️ Remove Species</button>
+        </div>
+      `;
+    }
+
     tr.innerHTML = `
       <td>
         <strong>
@@ -2761,7 +3046,7 @@ function renderAdminDatasetTable(){
       </td>
       <td>${s.region} ${s.isFoundInIndia ? (isInvasive ? '<br><span style="color:#C5221F; font-weight:600;">⚠️ Invasive (India Range)</span>' : '<br><span style="color:var(--accent-green); font-weight:600;">🇮🇳 India Range</span>') : ''}</td>
       <td><strong>Temp:</strong> ${s.tempText}<br><strong>Humidity:</strong> ${s.humidityText}<br><strong>Rain:</strong> ${s.rainfallPattern}</td>
-      <td style="font-size:11.5px; color:var(--text-secondary);">${s.source}</td>
+      <td>${actionsHtml}</td>
     `;
     adminDatasetTableBody.appendChild(tr);
   });
@@ -2824,26 +3109,202 @@ function renderAdminModerationList(){
         <div style="font-size:12.5px; background:var(--bg-surface); padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--border-color); margin-bottom:8px;">
           ${s.weatherSummary ? `<strong>Weather:</strong> ${s.weatherSummary}<br>` : ''}
           <strong>Notes:</strong> "${s.notes || 'No field notes provided.'}"<br>
-          <span style="font-size:11px; color:var(--text-tertiary);">Observer: ${s.author || 'Anonymous'} · ID: ${s.id}</span>
+          <span style="font-size:11px; color:var(--text-tertiary);">Observer: ${s.author || 'Anonymous'} · Coordinates: ${s.lat ? `${s.lat.toFixed(4)}, ${s.lon.toFixed(4)}` : 'None'} · ID: ${s.id}</span>
         </div>
 
         <!-- Inline Species Correction -->
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-          <span style="font-size:11.5px; font-weight:600; color:var(--text-secondary); white-space:nowrap;">Correct ID:</span>
+          <span style="font-size:11.5px; font-weight:600; color:var(--text-secondary); white-space:nowrap;">Quick ID:</span>
           <select class="input-field" style="height:32px; font-size:12.5px; padding:2px 8px;" onchange="updateSightingSpecies('${s.id}', this.value)">
             ${speciesOptionsHtml}
           </select>
         </div>
 
         <!-- Action Buttons -->
-        <div class="mod-actions-row">
-          ${s.status !== 'approved' ? `<button class="btn btn-primary" style="font-size:12px; padding:4px 12px;" onclick="validateSighting('${s.id}')">✅ Validate & Add to Scientific Dataset</button>` : ''}
+        <div class="mod-actions-row" style="display:flex; gap:8px; flex-wrap:wrap;">
+          ${s.status !== 'approved' ? `<button class="btn btn-primary" style="font-size:12px; padding:4px 12px;" onclick="validateSighting('${s.id}')">✅ Validate & Add to Dataset</button>` : `<button class="btn btn-secondary" style="font-size:12px; padding:4px 10px;" onclick="rejectSighting('${s.id}')">Unvalidate</button>`}
+          <button class="btn btn-secondary" style="font-size:12px; padding:4px 10px;" onclick="openEditSightingModal('${s.id}')">✏️ Edit Details</button>
           ${s.status !== 'rejected' ? `<button class="btn btn-secondary" style="font-size:12px; padding:4px 10px;" onclick="rejectSighting('${s.id}')">❌ Reject</button>` : ''}
           <button class="btn btn-secondary" style="font-size:12px; padding:4px 10px; color:var(--yt-red);" onclick="deleteUserSighting('${s.id}')">🗑️ Delete</button>
         </div>
       </div>
     `;
     list.appendChild(card);
+  });
+}
+
+// ---------------------------------------------------------------
+// 8. ADMIN ADD SPECIES & EDIT OBSERVATIONS MODAL LOGIC
+// ---------------------------------------------------------------
+const openAddSpeciesBtn = document.getElementById('openAddSpeciesBtn');
+const adminAddSpeciesModal = document.getElementById('adminAddSpeciesModal');
+const closeAddSpeciesBtn = document.getElementById('closeAddSpeciesBtn');
+const cancelAddSpeciesBtn = document.getElementById('cancelAddSpeciesBtn');
+const adminAddSpeciesForm = document.getElementById('adminAddSpeciesForm');
+
+if(openAddSpeciesBtn) openAddSpeciesBtn.addEventListener('click', () => {
+  adminAddSpeciesForm.reset();
+  adminAddSpeciesModal.classList.add('show');
+});
+if(closeAddSpeciesBtn) closeAddSpeciesBtn.addEventListener('click', () => adminAddSpeciesModal.classList.remove('show'));
+if(cancelAddSpeciesBtn) cancelAddSpeciesBtn.addEventListener('click', () => adminAddSpeciesModal.classList.remove('show'));
+if(adminAddSpeciesModal) adminAddSpeciesModal.addEventListener('click', (e) => { if(e.target === adminAddSpeciesModal) adminAddSpeciesModal.classList.remove('show'); });
+
+if(adminAddSpeciesForm){
+  adminAddSpeciesForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('newSpeciesName').value.trim();
+    const sci = document.getElementById('newSpeciesSci').value.trim();
+    const region = document.getElementById('newSpeciesRegion').value.trim();
+    const tier = document.getElementById('newSpeciesTier').value;
+    const isFoundInIndia = document.getElementById('newSpeciesIsIndia').checked;
+    const isInvasive = document.getElementById('newSpeciesIsInvasive').checked;
+    const tMin = parseFloat(document.getElementById('newSpeciesTempMin').value) || 20;
+    const tMax = parseFloat(document.getElementById('newSpeciesTempMax').value) || 35;
+    const hMin = parseFloat(document.getElementById('newSpeciesHumMin').value) || 50;
+    const hMax = parseFloat(document.getElementById('newSpeciesHumMax').value) || 95;
+    const rain = document.getElementById('newSpeciesRain').value.trim() || 'After seasonal rain';
+    const timing = document.getElementById('newSpeciesTiming').value.trim() || 'Daytime / dusk swarming';
+    const source = document.getElementById('newSpeciesSource').value.trim() || 'Added by Admin (praneeth814)';
+
+    const newSp = {
+      id: `CUST-${Date.now()}`,
+      name: name,
+      sci: sci,
+      tier: tier,
+      region: region,
+      zone: isFoundInIndia ? 'SA' : 'GLOBAL',
+      isFoundInIndia: isFoundInIndia,
+      isInvasive: isInvasive,
+      isCustom: true,
+      tempRange: [tMin, tMax],
+      tempText: `${tMin}–${tMax}°C ambient`,
+      humidityRange: [hMin, hMax],
+      humidityText: `${hMin}–${hMax}% RH`,
+      rainfallPattern: rain,
+      condition: 'after_rain',
+      windMax: 12,
+      windText: 'Calm or gentle breeze (<12 km/h)',
+      timingText: timing,
+      months: [1,2,3,4,5,6,7,8,9,10,11,12],
+      timeOfDay: ['morning', 'afternoon', 'evening'],
+      notes: `Custom species registered by Admin. ${region}.`,
+      source: source
+    };
+
+    customSpeciesList.unshift(newSp);
+    localStorage.setItem(LOCAL_STORAGE_CUSTOM_SPECIES_KEY, JSON.stringify(customSpeciesList));
+
+    try{
+      await fetch('/api/custom-species', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(newSp)
+      });
+    }catch(err){}
+
+    rebuildSpeciesDataset();
+    adminAddSpeciesModal.classList.remove('show');
+    alert(`Species "${name} (${sci})" added successfully! It is now active across all forecaster dropdowns and algorithms.`);
+  });
+}
+
+// Edit Sighting Modal
+window.openEditSightingModal = function(id){
+  const target = userSightings.find(s => String(s.id) === String(id));
+  if(!target) return;
+
+  const modal = document.getElementById('adminEditSightingModal');
+  document.getElementById('editSightingId').value = target.id;
+  document.getElementById('editSightingIdBadge').textContent = `ID: ${target.id}`;
+
+  const select = document.getElementById('editSightingSpeciesSelect');
+  select.innerHTML = `
+    <option value="CUSTOM">✏️ Custom / Other Species Name</option>
+    <optgroup label="Registered Species">
+      ${SPECIES.map(sp => `<option value="${sp.name} (${sp.sci})">${sp.isInvasive ? '⚠️ ' : ''}${sp.name} (${sp.sci})</option>`).join('')}
+    </optgroup>
+  `;
+
+  const customInput = document.getElementById('editSightingCustomSpecies');
+  let matchedOption = Array.from(select.options).find(o => o.value === target.species || (o.value && target.species && target.species.includes(o.value)));
+  if(matchedOption){
+    select.value = matchedOption.value;
+    customInput.style.display = 'none';
+    customInput.value = '';
+  } else {
+    select.value = 'CUSTOM';
+    customInput.style.display = 'block';
+    customInput.value = target.species;
+  }
+
+  select.onchange = () => {
+    if(select.value === 'CUSTOM'){
+      customInput.style.display = 'block';
+      customInput.focus();
+    } else {
+      customInput.style.display = 'none';
+    }
+  };
+
+  document.getElementById('editSightingLocation').value = target.location || '';
+  document.getElementById('editSightingLat').value = target.lat || '';
+  document.getElementById('editSightingLon').value = target.lon || '';
+  document.getElementById('editSightingDateTime').value = target.dateTime || '';
+  document.getElementById('editSightingStatus').value = target.status || 'pending';
+  document.getElementById('editSightingWeather').value = target.weatherSummary || '';
+  document.getElementById('editSightingAuthor').value = target.author || '';
+  document.getElementById('editSightingNotes').value = target.notes || '';
+
+  modal.classList.add('show');
+};
+
+const closeEditSightingBtn = document.getElementById('closeEditSightingBtn');
+const cancelEditSightingBtn = document.getElementById('cancelEditSightingBtn');
+const adminEditSightingModal = document.getElementById('adminEditSightingModal');
+if(closeEditSightingBtn) closeEditSightingBtn.addEventListener('click', () => adminEditSightingModal.classList.remove('show'));
+if(cancelEditSightingBtn) cancelEditSightingBtn.addEventListener('click', () => adminEditSightingModal.classList.remove('show'));
+if(adminEditSightingModal) adminEditSightingModal.addEventListener('click', (e) => { if(e.target === adminEditSightingModal) adminEditSightingModal.classList.remove('show'); });
+
+const adminEditSightingForm = document.getElementById('adminEditSightingForm');
+if(adminEditSightingForm){
+  adminEditSightingForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('editSightingId').value;
+    const target = userSightings.find(s => String(s.id) === String(id));
+    if(!target) return;
+
+    const select = document.getElementById('editSightingSpeciesSelect');
+    const customInput = document.getElementById('editSightingCustomSpecies');
+    let speciesName = select.value;
+    if(speciesName === 'CUSTOM') speciesName = customInput.value.trim() || 'Queen Ant';
+
+    const updates = {
+      species: speciesName,
+      location: document.getElementById('editSightingLocation').value.trim(),
+      lat: parseFloat(document.getElementById('editSightingLat').value) || 0,
+      lon: parseFloat(document.getElementById('editSightingLon').value) || 0,
+      dateTime: document.getElementById('editSightingDateTime').value.trim(),
+      status: document.getElementById('editSightingStatus').value,
+      weatherSummary: document.getElementById('editSightingWeather').value.trim(),
+      author: document.getElementById('editSightingAuthor').value.trim() || 'Anonymous Naturalist',
+      notes: document.getElementById('editSightingNotes').value.trim()
+    };
+
+    Object.assign(target, updates);
+    localStorage.setItem(LOCAL_STORAGE_BACKUP_KEY, JSON.stringify(userSightings));
+
+    try{
+      await fetch(`/api/user-contributions/${id}`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(updates)
+      });
+    }catch(err){}
+
+    syncUserContributionsToRAG();
+    renderAdminModerationList();
+    adminEditSightingModal.classList.remove('show');
   });
 }
 
@@ -2889,6 +3350,7 @@ document.getElementById('adminImportJsonInput').addEventListener('change', (e) =
 });
 
 // Initial load
+loadCustomSpecies();
 loadUserSightings();
 
 })();

@@ -1,7 +1,7 @@
 """
-Flight Watch Server with Isolated User Contribution Storage
+Flight Watch Server with Isolated User Contribution Storage and Custom Species Support
 Serves static assets and provides dedicated endpoints for user contributions
-persisted separately in 'user_contributions.json'.
+persisted separately in 'user_contributions.json' and custom species in 'custom_species.json'.
 """
 
 import http.server
@@ -12,18 +12,24 @@ import sys
 
 PORT = int(os.environ.get('PORT', 8085))
 USER_DATA_FILE = os.path.join(os.path.dirname(__file__), 'user_contributions.json')
+CUSTOM_SPECIES_FILE = os.path.join(os.path.dirname(__file__), 'custom_species.json')
 
 # Ensure user_contributions.json exists with clean empty array if not present
 if not os.path.exists(USER_DATA_FILE):
     with open(USER_DATA_FILE, 'w', encoding='utf-8') as f:
         json.dump([], f, indent=2)
 
+# Ensure custom_species.json exists with clean empty array if not present
+if not os.path.exists(CUSTOM_SPECIES_FILE):
+    with open(CUSTOM_SPECIES_FILE, 'w', encoding='utf-8') as f:
+        json.dump([], f, indent=2)
+
 class FlightWatchHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         # Enable CORS and disable caching for API endpoints
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
         super().end_headers()
 
     def do_OPTIONS(self):
@@ -39,6 +45,22 @@ class FlightWatchHandler(http.server.SimpleHTTPRequestHandler):
             try:
                 if os.path.exists(USER_DATA_FILE):
                     with open(USER_DATA_FILE, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                else:
+                    content = '[]'
+                self.wfile.write(content.encode('utf-8'))
+            except Exception as e:
+                self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
+            return
+
+        if self.path == '/api/custom-species':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            self.end_headers()
+            try:
+                if os.path.exists(CUSTOM_SPECIES_FILE):
+                    with open(CUSTOM_SPECIES_FILE, 'r', encoding='utf-8') as f:
                         content = f.read()
                 else:
                     content = '[]'
@@ -80,7 +102,13 @@ class FlightWatchHandler(http.server.SimpleHTTPRequestHandler):
                 else:
                     if 'status' not in new_entry:
                         new_entry['status'] = 'pending'
-                    current_data.insert(0, new_entry)
+                    # Check if item with same ID already exists, if so update it
+                    entry_id = str(new_entry.get('id', ''))
+                    existing_idx = next((i for i, item in enumerate(current_data) if str(item.get('id', '')) == entry_id), None)
+                    if existing_idx is not None:
+                        current_data[existing_idx] = new_entry
+                    else:
+                        current_data.insert(0, new_entry)
 
                 # Save back to separate user_contributions.json
                 with open(USER_DATA_FILE, 'w', encoding='utf-8') as f:
@@ -93,6 +121,47 @@ class FlightWatchHandler(http.server.SimpleHTTPRequestHandler):
                     "status": "success",
                     "message": "User contribution saved separately to user_contributions.json",
                     "total_contributions": len(current_data)
+                }).encode('utf-8'))
+            except Exception as e:
+                self.send_response(400)
+                self.send_header('Content-Type', 'application/json; charset=utf-8')
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "error": str(e)}).encode('utf-8'))
+            return
+
+        if self.path == '/api/custom-species':
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_body = self.rfile.read(content_length)
+            try:
+                new_species = json.loads(post_body.decode('utf-8'))
+                current_species = []
+                if os.path.exists(CUSTOM_SPECIES_FILE):
+                    try:
+                        with open(CUSTOM_SPECIES_FILE, 'r', encoding='utf-8') as f:
+                            current_species = json.load(f)
+                    except json.JSONDecodeError:
+                        current_species = []
+
+                if isinstance(new_species, list):
+                    current_species = new_species
+                else:
+                    sp_id = str(new_species.get('id', ''))
+                    existing_idx = next((i for i, sp in enumerate(current_species) if str(sp.get('id', '')) == sp_id), None)
+                    if existing_idx is not None:
+                        current_species[existing_idx] = new_species
+                    else:
+                        current_species.append(new_species)
+
+                with open(CUSTOM_SPECIES_FILE, 'w', encoding='utf-8') as f:
+                    json.dump(current_species, f, indent=2, ensure_ascii=False)
+
+                self.send_response(201)
+                self.send_header('Content-Type', 'application/json; charset=utf-8')
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    "status": "success",
+                    "message": "Custom species saved to custom_species.json",
+                    "total_custom_species": len(current_species)
                 }).encode('utf-8'))
             except Exception as e:
                 self.send_response(400)
@@ -200,6 +269,34 @@ class FlightWatchHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps({"status": "error", "error": str(e)}).encode('utf-8'))
             return
 
+        if self.path.startswith('/api/custom-species/'):
+            species_id = self.path.split('/')[-1]
+            try:
+                current_species = []
+                if os.path.exists(CUSTOM_SPECIES_FILE):
+                    with open(CUSTOM_SPECIES_FILE, 'r', encoding='utf-8') as f:
+                        current_species = json.load(f)
+                
+                filtered_species = [s for s in current_species if str(s.get('id')) != species_id]
+                
+                with open(CUSTOM_SPECIES_FILE, 'w', encoding='utf-8') as f:
+                    json.dump(filtered_species, f, indent=2, ensure_ascii=False)
+
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json; charset=utf-8')
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    "status": "success",
+                    "message": f"Deleted custom species {species_id}",
+                    "total_custom_species": len(filtered_species)
+                }).encode('utf-8'))
+            except Exception as e:
+                self.send_response(400)
+                self.send_header('Content-Type', 'application/json; charset=utf-8')
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "error": str(e)}).encode('utf-8'))
+            return
+
         self.send_error(404, "Endpoint not found")
 
 
@@ -209,8 +306,10 @@ if __name__ == '__main__':
         print(f"[OK] Flight Watch Scientific Server running at http://localhost:{PORT}")
         print(f"[OK] Base Scientific RAG: nuptial_rag_dataset.json / rag_data.js (Immutable)")
         print(f"[OK] User Contribution Store: {USER_DATA_FILE} (Separate Storage)")
+        print(f"[OK] Custom Species Store: {CUSTOM_SPECIES_FILE} (Separate Storage)")
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:
             print("\nShutting down server.")
             httpd.server_close()
+
