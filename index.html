@@ -1182,6 +1182,41 @@ body {
   color: var(--accent-blue);
 }
 
+.ai-header-pill {
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--radius-pill);
+  background: var(--bg-surface);
+  color: var(--accent-blue);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.ai-header-pill:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-blue);
+}
+
+.ai-limit-progress {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  margin: 6px 0;
+}
+.ai-limit-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-green), var(--accent-amber), var(--yt-red));
+  border-radius: var(--radius-pill);
+  transition: width 0.3s ease;
+}
+
 .ai-chat-input-area {
   padding: 8px 12px;
   background: var(--bg-surface);
@@ -1891,7 +1926,10 @@ body {
       </div>
     </div>
     <div style="display:flex; align-items:center; gap:6px;">
-      <button class="btn-icon" id="clearAiChatBtn" type="button" title="Clear conversation" style="width:30px; height:30px; font-size:12px;">
+      <button class="ai-header-pill" id="openGeminiSettingsBtn" type="button" title="Configure Google Gemini API Key & Daily Limits">
+        💎 <span id="aiUsageText">0/20</span> ⚙️
+      </button>
+      <button class="btn-icon" id="clearAiChatBtn" type="button" title="Clear conversation" style="width:28px; height:28px; font-size:12px;">
         🗑️
       </button>
       <button class="modal-close-icon" id="closeAiChatBtn" type="button" title="Minimize AI Chat" style="font-size:20px;">
@@ -1919,6 +1957,70 @@ body {
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
     </button>
   </form>
+</div>
+
+<!-- C. Gemini API & Usage Limit Settings Modal -->
+<div class="modal-backdrop" id="geminiConfigModal">
+  <div class="modal-dialog" style="max-width:480px;">
+    <div class="modal-header-bar">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:18px;">💎</span>
+        <h3 class="modal-header-title">Google Gemini API Settings</h3>
+      </div>
+      <button class="modal-close-icon" id="closeGeminiConfigBtn">&times;</button>
+    </div>
+    <div class="modal-content-area">
+      <form id="geminiConfigForm">
+        <div style="background:var(--bg-secondary); padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--border-color); margin-bottom:14px; font-size:12.5px; line-height:1.5;">
+          <strong>Connect Google Gemini:</strong><br>
+          Enables neural reasoning grounded directly in our 40+ peer-reviewed RAG literature chunks. When the daily limit is reached or if offline, the assistant automatically uses our built-in RAG synthesis engine.
+          <div style="margin-top:6px;">
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style="color:var(--accent-blue); font-weight:600; text-decoration:underline;">
+              🔑 Get Free API Key at Google AI Studio &rarr;
+            </a>
+          </div>
+        </div>
+
+        <div class="input-group" style="margin-bottom:14px;">
+          <div class="input-label">
+            <span>Gemini API Key</span>
+            <span style="font-size:11px; color:var(--text-tertiary);">Saved locally in browser</span>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <input class="input-field" id="geminiApiKeyInput" type="password" placeholder="AIzaSy..." autocomplete="off">
+            <button class="btn btn-secondary" id="toggleApiKeyVisibilityBtn" type="button" style="padding:0 10px; font-size:12px;" title="Show/Hide Key">👁️</button>
+          </div>
+        </div>
+
+        <!-- Usage Limiter & Quota -->
+        <div style="background:var(--bg-surface); padding:12px; border-radius:var(--radius-sm); border:1px solid var(--border-color); margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-weight:600; font-size:12.5px;">Daily Usage Quota</span>
+            <span style="font-size:12px; font-weight:700; color:var(--accent-blue);" id="geminiUsageStat">0 / 20 queries</span>
+          </div>
+          <div class="ai-limit-progress">
+            <div class="ai-limit-bar" id="geminiUsageBar" style="width: 0%;"></div>
+          </div>
+          <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">
+            Strict usage limit protects your quota and prevents runaway API billing. Resets daily at midnight.
+          </div>
+        </div>
+
+        <div class="input-group" style="margin-bottom:18px;">
+          <div class="input-label">Daily Query Ceiling (Limit)</div>
+          <input class="input-field" id="geminiDailyLimitInput" type="number" min="1" max="100" value="20">
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+          <button class="btn btn-secondary" id="testGeminiKeyBtn" type="button" style="font-size:12px;">🧪 Test Connection</button>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-secondary" id="cancelGeminiConfigBtn" type="button">Cancel</button>
+            <button class="btn btn-primary" type="submit">Save Settings</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 
 <!-- ==========================================================================
@@ -3667,21 +3769,90 @@ document.getElementById('adminImportJsonInput').addEventListener('change', (e) =
 });
 
 // ---------------------------------------------------------------
-// 9. AI RAG ASSISTANT ENGINE & CHAT WIDGET
+// 9. AI RAG ASSISTANT ENGINE & GOOGLE GEMINI INTEGRATION
 // ---------------------------------------------------------------
 const aiChatWidget = document.getElementById('aiChatWidget');
 const floatingAiChatBtn = document.getElementById('floatingAiChatBtn');
 const navOpenAiChatBtn = document.getElementById('navOpenAiChatBtn');
 const closeAiChatBtn = document.getElementById('closeAiChatBtn');
 const clearAiChatBtn = document.getElementById('clearAiChatBtn');
+const openGeminiSettingsBtn = document.getElementById('openGeminiSettingsBtn');
 const aiChatHistory = document.getElementById('aiChatHistory');
 const aiChatForm = document.getElementById('aiChatForm');
 const aiChatInput = document.getElementById('aiChatInput');
 const aiChatChips = document.getElementById('aiChatChips');
 const aiRAGStatusLabel = document.getElementById('aiRAGStatusLabel');
 
-let aiChatMessages = [];
+// Gemini Config Modal Elements
+const geminiConfigModal = document.getElementById('geminiConfigModal');
+const closeGeminiConfigBtn = document.getElementById('closeGeminiConfigBtn');
+const cancelGeminiConfigBtn = document.getElementById('cancelGeminiConfigBtn');
+const geminiConfigForm = document.getElementById('geminiConfigForm');
+const geminiApiKeyInput = document.getElementById('geminiApiKeyInput');
+const geminiDailyLimitInput = document.getElementById('geminiDailyLimitInput');
+const toggleApiKeyVisibilityBtn = document.getElementById('toggleApiKeyVisibilityBtn');
+const testGeminiKeyBtn = document.getElementById('testGeminiKeyBtn');
+
+let geminiApiKey = localStorage.getItem('flightwatch_gemini_api_key') || '';
+let geminiDailyLimit = parseInt(localStorage.getItem('flightwatch_gemini_daily_limit') || '20');
 const AI_CHAT_STORAGE_KEY = 'flightwatch_ai_chat_history';
+
+function getClientGeminiUsage(){
+  const today = new Date().toISOString().slice(0, 10);
+  try{
+    const raw = localStorage.getItem('flightwatch_gemini_usage');
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(parsed && parsed.date === today) return parsed;
+    }
+  }catch(e){}
+  const fresh = { date: today, count: 0 };
+  localStorage.setItem('flightwatch_gemini_usage', JSON.stringify(fresh));
+  return fresh;
+}
+
+function incrementClientGeminiUsage(){
+  const usage = getClientGeminiUsage();
+  usage.count += 1;
+  localStorage.setItem('flightwatch_gemini_usage', JSON.stringify(usage));
+  updateGeminiUI();
+  return usage;
+}
+
+function updateGeminiUI(){
+  const usage = getClientGeminiUsage();
+  const count = usage.count || 0;
+  const limit = geminiDailyLimit || 20;
+  
+  const aiUsageText = document.getElementById('aiUsageText');
+  if(aiUsageText) aiUsageText.textContent = `${count}/${limit}`;
+  
+  const geminiUsageStat = document.getElementById('geminiUsageStat');
+  if(geminiUsageStat) geminiUsageStat.textContent = `${count} / ${limit} queries today`;
+  
+  const geminiUsageBar = document.getElementById('geminiUsageBar');
+  if(geminiUsageBar){
+    const pct = Math.min(100, Math.round((count / limit) * 100));
+    geminiUsageBar.style.width = `${pct}%`;
+  }
+}
+
+async function syncServerGeminiUsage(){
+  try{
+    const res = await fetch('/api/gemini-usage');
+    if(res.ok){
+      const data = await res.json();
+      if(data && typeof data.today === 'number'){
+        const local = getClientGeminiUsage();
+        if(data.today > local.count){
+          local.count = data.today;
+          localStorage.setItem('flightwatch_gemini_usage', JSON.stringify(local));
+        }
+      }
+    }
+  }catch(e){}
+  updateGeminiUI();
+}
 
 function updateAIRAGStatus(){
   if(aiRAGStatusLabel){
@@ -3698,6 +3869,8 @@ function openAiChat(){
       initAiChatWelcome();
     }
     updateAIRAGStatus();
+    updateGeminiUI();
+    syncServerGeminiUsage();
     setTimeout(() => { if(aiChatInput) aiChatInput.focus(); }, 150);
   }
 }
@@ -3710,10 +3883,75 @@ if(floatingAiChatBtn) floatingAiChatBtn.addEventListener('click', openAiChat);
 if(navOpenAiChatBtn) navOpenAiChatBtn.addEventListener('click', openAiChat);
 if(closeAiChatBtn) closeAiChatBtn.addEventListener('click', closeAiChat);
 if(clearAiChatBtn) clearAiChatBtn.addEventListener('click', () => {
-  aiChatMessages = [];
   localStorage.removeItem(AI_CHAT_STORAGE_KEY);
   initAiChatWelcome();
 });
+
+// Gemini Config Modal Handlers
+if(openGeminiSettingsBtn){
+  openGeminiSettingsBtn.addEventListener('click', () => {
+    geminiApiKeyInput.value = geminiApiKey || '';
+    geminiDailyLimitInput.value = geminiDailyLimit || 20;
+    updateGeminiUI();
+    geminiConfigModal.classList.add('show');
+  });
+}
+if(closeGeminiConfigBtn) closeGeminiConfigBtn.addEventListener('click', () => geminiConfigModal.classList.remove('show'));
+if(cancelGeminiConfigBtn) cancelGeminiConfigBtn.addEventListener('click', () => geminiConfigModal.classList.remove('show'));
+if(geminiConfigModal) geminiConfigModal.addEventListener('click', (e) => { if(e.target === geminiConfigModal) geminiConfigModal.classList.remove('show'); });
+
+if(toggleApiKeyVisibilityBtn){
+  toggleApiKeyVisibilityBtn.addEventListener('click', () => {
+    geminiApiKeyInput.type = geminiApiKeyInput.type === 'password' ? 'text' : 'password';
+  });
+}
+
+if(geminiConfigForm){
+  geminiConfigForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    geminiApiKey = geminiApiKeyInput.value.trim();
+    geminiDailyLimit = Math.max(1, parseInt(geminiDailyLimitInput.value) || 20);
+    localStorage.setItem('flightwatch_gemini_api_key', geminiApiKey);
+    localStorage.setItem('flightwatch_gemini_daily_limit', String(geminiDailyLimit));
+    updateGeminiUI();
+    geminiConfigModal.classList.remove('show');
+    alert(`Gemini API settings saved! Limit set to ${geminiDailyLimit} queries/day.`);
+  });
+}
+
+if(testGeminiKeyBtn){
+  testGeminiKeyBtn.addEventListener('click', async () => {
+    const key = geminiApiKeyInput.value.trim() || geminiApiKey;
+    if(!key){
+      alert('Please enter a Google Gemini API key to test connection.');
+      return;
+    }
+    testGeminiKeyBtn.disabled = true;
+    testGeminiKeyBtn.textContent = 'Testing...';
+    try{
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: "Respond in 3 words: 'Gemini API Connected!'" }] }],
+          generationConfig: { maxOutputTokens: 20 }
+        })
+      });
+      const data = await res.json();
+      if(data && data.candidates && data.candidates[0]){
+        const text = data.candidates[0].content.parts[0].text;
+        alert(`✓ Connection Successful!\nGemini Response: "${text.trim()}"`);
+      } else {
+        throw new Error(data.error ? data.error.message : 'Invalid response format');
+      }
+    }catch(err){
+      alert(`❌ Connection Test Failed: ${err.message}`);
+    }finally{
+      testGeminiKeyBtn.disabled = false;
+      testGeminiKeyBtn.textContent = '🧪 Test Connection';
+    }
+  });
+}
 
 // Clickable chip suggestions
 if(aiChatChips){
@@ -3735,7 +3973,7 @@ function initAiChatWelcome(){
       <div class="ai-chat-avatar" style="width:28px; height:28px; font-size:13px;">✨</div>
       <div class="ai-msg-bubble bot">
         <strong>Hello! I am the FlightWatch Nuptial Flight AI Assistant.</strong><br>
-        I am grounded in a peer-reviewed dataset of <strong>${SPECIES.length} ant species</strong>, <strong>${dynamicRAGChunks.length} scientific knowledge chunks</strong>, and active community records.<br><br>
+        Powered by Google Gemini and grounded in a peer-reviewed dataset of <strong>${SPECIES.length} ant species</strong>, <strong>${dynamicRAGChunks.length} scientific knowledge chunks</strong>, and active community records.<br><br>
         Ask me anything about:
         <ul style="margin:6px 0 0 16px; padding:0; line-height:1.6;">
           <li>Exact temperature, humidity, rainfall & wind flight thresholds</li>
@@ -3909,6 +4147,64 @@ function retrieveRAGKnowledge(query, topK = 4){
   return { chunks: topChunks, species: topSpecies };
 }
 
+async function callGeminiApiWithRAG(query, ragContext){
+  const key = geminiApiKey;
+  
+  // 1. Try server proxy endpoint first
+  try{
+    const serverRes = await fetch('/api/gemini-chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        prompt: query,
+        context: ragContext,
+        apiKey: key,
+        customLimit: geminiDailyLimit
+      })
+    });
+    
+    if(serverRes.status === 429){
+      const errJson = await serverRes.json();
+      return { rateLimited: true, error: errJson.error };
+    }
+    
+    if(serverRes.ok){
+      const serverData = await serverRes.json();
+      if(serverData.status === 'success' && serverData.text){
+        incrementClientGeminiUsage();
+        return { text: serverData.text, model: serverData.model || 'gemini-1.5-flash' };
+      }
+    }
+  }catch(e){}
+
+  // 2. Direct client-side fetch if user provided client key
+  if(key){
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+    const systemPrompt = "You are FlightWatch AI, an expert scientific entomology assistant specialized in ant nuptial flight biology. Answer accurately, grounded strictly in the provided peer-reviewed RAG dataset. Cite sources and format with clear markdown.";
+    const fullPrompt = `${systemPrompt}\n\n[GROUNDED SCIENTIFIC RAG CONTEXT]:\n${ragContext}\n\n[USER QUESTION]:\n${query}`;
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: fullPrompt }] }],
+        generationConfig: { maxOutputTokens: 650, temperature: 0.2 }
+      })
+    });
+
+    if(res.ok){
+      const data = await res.json();
+      if(data.candidates && data.candidates[0]){
+        const text = data.candidates[0].content.parts[0].text;
+        incrementClientGeminiUsage();
+        return { text: text, model: 'gemini-1.5-flash' };
+      }
+    }
+  }
+
+  return null;
+}
+
 function processRAGQuery(query){
   const cleanQ = query.toLowerCase().trim();
   const { chunks, species } = retrieveRAGKnowledge(query, 4);
@@ -4061,12 +4357,55 @@ async function handleUserAiQuery(query){
   appendUserMessage(userText);
   showBotTyping();
 
-  // Short realistic generation latency
-  setTimeout(() => {
-    hideBotTyping();
-    const { html, sources } = processRAGQuery(userText);
-    appendBotMessage(html, sources);
-  }, 350);
+  // Retrieve RAG Context
+  const { chunks, species } = retrieveRAGKnowledge(userText, 4);
+  const sourcesList = [];
+  chunks.forEach(c => sourcesList.push({ id: c.id, title: c.title, tier: c.tier, source: c.source }));
+  species.forEach(s => {
+    if(!sourcesList.some(src => src.id === s.id)){
+      sourcesList.push({ id: s.id, title: `${s.name} (${s.sci})`, tier: s.tier, source: s.source });
+    }
+  });
+
+  // Prepare context text for Gemini
+  let contextText = chunks.map(c => `[CHUNK: ${c.id}] Title: ${c.title} (Tier: ${c.tier})\nSource: ${c.source}\nContent: ${c.content}`).join('\n\n');
+  contextText += '\n\n' + species.map(s => `[SPECIES: ${s.id}] ${s.name} (${s.sci}) | Region: ${s.region} | Temp: ${s.tempText} | Humidity: ${s.humidityText} | Rain: ${s.rainfallPattern} | Timing: ${s.timingText} | Source: ${s.source}`).join('\n');
+  if(selectedPlace && weatherData){
+    contextText += `\n\n[USER CURRENT LOCATION & TELEMETRY]: Place: ${selectedPlace.name}, Temp: ${weatherData.temp}°C, Humidity: ${weatherData.humidity}%, Rain 48h: ${weatherData.rain48h}mm, Wind: ${weatherData.windSpeed}km/h`;
+  }
+
+  // Check Daily Quota
+  const usage = getClientGeminiUsage();
+  const limit = geminiDailyLimit || 20;
+  let geminiResult = null;
+
+  if(usage.count < limit){
+    try{
+      geminiResult = await callGeminiApiWithRAG(userText, contextText);
+    }catch(err){
+      geminiResult = null;
+    }
+  }
+
+  hideBotTyping();
+
+  if(geminiResult && geminiResult.text){
+    let formattedHtml = formatMarkdown(geminiResult.text);
+    formattedHtml = `<div style="font-size:11px; color:var(--accent-blue); font-weight:600; margin-bottom:4px;">✨ Synthesized with Google Gemini (${geminiResult.model || '1.5-flash'}) · Daily Usage: ${getClientGeminiUsage().count}/${limit}</div>` + formattedHtml;
+    appendBotMessage(formattedHtml, sourcesList);
+  } else {
+    // Grounded Fallback
+    const local = processRAGQuery(userText);
+    let note = '';
+    if(usage.count >= limit){
+      note = `<div style="font-size:11px; color:var(--accent-amber); font-weight:600; margin-bottom:4px;">⚠️ Daily Gemini API quota reached (${limit}/${limit}). Using offline grounded RAG engine.</div>`;
+    } else if(!geminiApiKey){
+      note = `<div style="font-size:11px; color:var(--text-secondary); margin-bottom:4px;">💡 <em>Offline RAG Mode (Add your Gemini API Key in ⚙️ settings for live neural reasoning)</em></div>`;
+    }
+    appendBotMessage(note + local.html, sourcesList);
+  }
+
+  updateGeminiUI();
 }
 
 if(aiChatForm){
@@ -4080,6 +4419,7 @@ if(aiChatForm){
 // Initial load
 loadCustomSpecies();
 loadUserSightings();
+updateGeminiUI();
 
 })();
 </script>

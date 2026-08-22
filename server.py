@@ -9,10 +9,15 @@ import socketserver
 import json
 import os
 import sys
+import datetime
+import urllib.request
+import urllib.error
 
 PORT = int(os.environ.get('PORT', 8085))
 USER_DATA_FILE = os.path.join(os.path.dirname(__file__), 'user_contributions.json')
 CUSTOM_SPECIES_FILE = os.path.join(os.path.dirname(__file__), 'custom_species.json')
+USAGE_FILE = os.path.join(os.path.dirname(__file__), 'gemini_usage.json')
+DAILY_LIMIT = int(os.environ.get('GEMINI_DAILY_LIMIT', 20))
 
 # Ensure user_contributions.json exists with clean empty array if not present
 if not os.path.exists(USER_DATA_FILE):
@@ -23,6 +28,31 @@ if not os.path.exists(USER_DATA_FILE):
 if not os.path.exists(CUSTOM_SPECIES_FILE):
     with open(CUSTOM_SPECIES_FILE, 'w', encoding='utf-8') as f:
         json.dump([], f, indent=2)
+
+def get_gemini_usage():
+    today_str = datetime.date.today().isoformat()
+    usage = {"date": today_str, "count": 0}
+    if os.path.exists(USAGE_FILE):
+        try:
+            with open(USAGE_FILE, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                if data.get('date') == today_str:
+                    usage = data
+                else:
+                    usage = {"date": today_str, "count": 0}
+        except Exception:
+            pass
+    return usage
+
+def increment_gemini_usage():
+    usage = get_gemini_usage()
+    usage['count'] += 1
+    try:
+        with open(USAGE_FILE, 'w', encoding='utf-8') as f:
+            json.dump(usage, f, indent=2)
+    except Exception:
+        pass
+    return usage
 
 class FlightWatchHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
@@ -69,10 +99,142 @@ class FlightWatchHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
             return
 
+        if self.path == '/api/gemini-usage':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            self.end_headers()
+            usage = get_gemini_usage()
+            self.wfile.write(json.dumps({
+                "date": usage.get('date'),
+                "today": usage.get('count', 0),
+                "limit": DAILY_LIMIT
+            }).encode('utf-8'))
+            return
+
         # Default static file handling
         return super().do_GET()
 
     def do_POST(self):
+        if self.path == '/api/gemini-chat':
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_body = self.rfile.read(content_length)
+            try:
+                data = json.loads(post_body.decode('utf-8'))
+                prompt = data.get('prompt', '').strip()
+                rag_context = data.get('context', '').strip()
+                client_api_key = data.get('apiKey', '').strip()
+                
+                # Check daily usage rate limit
+                usage = get_gemini_usage()
+                today_count = usage.get('count', 0)
+                limit = data.get('customLimit') or DAILY_LIMIT
+
+                if today_count >= limit:
+                    self.send_response(429)
+                    self.send_header('Content-Type', 'application/json; charset=utf-8')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({
+                        "status": "rate_limited",
+                        "error": f"Daily Gemini API limit reached ({today_count}/{limit} queries today).",
+                        "limitReached": True,
+                        "usage": {"today": today_count, "limit": limit}
+                    }).encode('utf-8'))
+                    return
+
+                api_key = client_api_key or os.environ.get('GEMINI_API_KEY', '').strip()
+                if not api_key:
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/json; charset=utf-8')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({
+                        "status": "no_key",
+                        "fallback": True,
+                        "message": "No Gemini API Key provided. Set an API key or use offline RAG mode.",
+                        "usage": {"today": today_count, "limit": limit}
+                    }).encode('utf-8'))
+                    return
+
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+                
+                system_text = (
+                    "You are FlightWatch AI, an entomology assistant specialized in ant nuptial flight biology. "
+                    "Answer accurately, grounded strictly in the provided peer-reviewed scientific literature chunks and species triggers. "
+                    "Cite sources and chunk IDs when relevant. Keep your response concise, structured, and helpful."
+                )
+                
+                payload = {
+                    "contents": [
+                        {
+                            "parts": [
+                                {
+                                    "text": f"{system_text}\n\n[GROUNDED SCIENTIFIC RAG CONTEXT]:\n{rag_context}\n\n[USER QUESTION]:\n{prompt}"
+                                }
+                            ]
+                        }
+                    ],
+                    "generationConfig": {
+                        "maxOutputTokens": 650,
+                        "temperature": 0.2
+                    }
+                }
+
+                req = urllib.request.Request(
+                    url,
+                    data=json.dumps(payload).encode('utf-8'),
+                    headers={'Content-Type': 'application/json'}
+                )
+                
+                try:
+                    with urllib.request.urlopen(req, timeout=12) as response:
+                        res_data = json.loads(response.read().decode('utf-8'))
+                        
+                        generated_text = ""
+                        candidates = res_data.get('candidates', [])
+                        if candidates:
+                            parts = candidates[0].get('content', {}).get('parts', [])
+                            if parts:
+                                generated_text = parts[0].get('text', '')
+                        
+                        if generated_text:
+                            new_usage = increment_gemini_usage()
+                            self.send_response(200)
+                            self.send_header('Content-Type', 'application/json; charset=utf-8')
+                            self.end_headers()
+                            self.wfile.write(json.dumps({
+                                "status": "success",
+                                "text": generated_text,
+                                "model": "gemini-1.5-flash",
+                                "usage": {"today": new_usage['count'], "limit": limit}
+                            }).encode('utf-8'))
+                            return
+                        else:
+                            raise Exception("Empty generation response from Gemini API")
+                except urllib.error.HTTPError as he:
+                    err_body = he.read().decode('utf-8', errors='ignore')
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/json; charset=utf-8')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({
+                        "status": "api_error",
+                        "fallback": True,
+                        "error": f"Gemini API returned {he.code}: {err_body}",
+                        "usage": {"today": today_count, "limit": limit}
+                    }).encode('utf-8'))
+                    return
+
+            except Exception as e:
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json; charset=utf-8')
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    "status": "error",
+                    "fallback": True,
+                    "error": str(e),
+                    "usage": {"today": get_gemini_usage()['count'], "limit": DAILY_LIMIT}
+                }).encode('utf-8'))
+                return
+
         if self.path.startswith('/api/user-contributions/approve/'):
             sighting_id = self.path.split('/')[-1]
             return self._update_sighting_status(sighting_id, 'approved')
