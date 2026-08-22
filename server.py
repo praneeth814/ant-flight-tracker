@@ -116,6 +116,32 @@ class FlightWatchHandler(http.server.SimpleHTTPRequestHandler):
         return super().do_GET()
 
     def do_POST(self):
+        if self.path == '/api/admin/login':
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_body = self.rfile.read(content_length)
+            try:
+                data = json.loads(post_body.decode('utf-8'))
+                u = data.get('username', '').strip().lower()
+                p = data.get('password', '').strip()
+                
+                # Check credentials on server side
+                if (u == 'praneeth814' and p == '8142355522') or (u == 'admin' and (p == 'antflight2026' or p == 'admin')):
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/json; charset=utf-8')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"status": "success", "authenticated": True}).encode('utf-8'))
+                else:
+                    self.send_response(401)
+                    self.send_header('Content-Type', 'application/json; charset=utf-8')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"status": "error", "error": "Invalid credentials"}).encode('utf-8'))
+            except Exception as e:
+                self.send_response(400)
+                self.send_header('Content-Type', 'application/json; charset=utf-8')
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "error": str(e)}).encode('utf-8'))
+            return
+
         if self.path == '/api/gemini-chat':
             content_length = int(self.headers.get('Content-Length', 0))
             post_body = self.rfile.read(content_length)

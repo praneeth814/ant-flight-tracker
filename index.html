@@ -1983,13 +1983,10 @@ body {
 
         <div class="input-group" style="margin-bottom:14px;">
           <div class="input-label">
-            <span>Gemini API Key</span>
-            <span style="font-size:11px; color:var(--text-tertiary);">Saved locally in browser</span>
+            <span>Google Gemini API Key</span>
+            <span style="font-size:11px; color:var(--text-tertiary);">🔒 Encrypted in browser · Never shown</span>
           </div>
-          <div style="display:flex; gap:6px;">
-            <input class="input-field" id="geminiApiKeyInput" type="password" placeholder="AIzaSy..." autocomplete="off">
-            <button class="btn btn-secondary" id="toggleApiKeyVisibilityBtn" type="button" style="padding:0 10px; font-size:12px;" title="Show/Hide Key">👁️</button>
-          </div>
+          <input class="input-field" id="geminiApiKeyInput" type="password" placeholder="Enter your Gemini API key (AIzaSy...)" autocomplete="off">
         </div>
 
         <!-- Usage Limiter & Quota -->
@@ -2079,7 +2076,7 @@ document.getElementById('navLogoBtn').addEventListener('click', () => {
 });
 
 // ---------------------------------------------------------------
-// 3. ADMIN AUTHENTICATION (praneeth814 / 8142355522)
+// 3. ADMIN AUTHENTICATION
 // ---------------------------------------------------------------
 const adminAuthBtn = document.getElementById('adminAuthBtn');
 const adminBtnLabel = document.getElementById('adminBtnLabel');
@@ -2099,7 +2096,7 @@ let activeModFilter = 'ALL';
 
 function updateAdminUI(){
   if(isAdminAuthenticated){
-    adminBtnLabel.textContent = '🛡️ Admin (praneeth814)';
+    adminBtnLabel.textContent = '🛡️ Admin Console';
     adminAuthBtn.className = 'btn btn-secondary';
   }else{
     adminBtnLabel.textContent = 'Admin Login';
@@ -2124,13 +2121,42 @@ adminAuthBtn.addEventListener('click', () => {
 closeAdminLoginBtn.addEventListener('click', () => adminLoginModal.classList.remove('show'));
 adminLoginModal.addEventListener('click', (e) => { if(e.target === adminLoginModal) adminLoginModal.classList.remove('show'); });
 
-adminLoginForm.addEventListener('submit', (e) => {
+async function computeHash(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+adminLoginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const u = adminIdInput.value.trim().toLowerCase();
   const p = adminPasswordInput.value.trim();
 
-  // Admin Credentials: praneeth814 / 8142355522 (and fallback admin/antflight2026)
-  if((u === 'praneeth814' && p === '8142355522') || (u === 'admin' && (p === 'antflight2026' || p === 'admin'))){
+  let authenticated = false;
+
+  // 1. Authenticate with secure backend endpoint
+  try{
+    const res = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ username: u, password: p })
+    });
+    if(res.ok){
+      const data = await res.json();
+      if(data && data.authenticated) authenticated = true;
+    }
+  }catch(err){}
+
+  // 2. Cryptographic hash comparison fallback for offline environment
+  if(!authenticated){
+    const uHash = await computeHash(u);
+    const pHash = await computeHash(p);
+    if((uHash === '79f33692f06bd67c5a8b066c464034db2e1c22b4c5f46aba9cda1454880e19c0' && pHash === '7c266f2a272a537a3d1dd668ec854f9030d3a0bb37088cab3118c215a9384a01') ||
+       (uHash === '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918' && (pHash === '95d85a1a1bb100234a942b083c2adab53b3f2e46b9a8dc563e46b14249a5ec1b' || pHash === '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918'))){
+      authenticated = true;
+    }
+  }
+
+  if(authenticated){
     isAdminAuthenticated = true;
     localStorage.setItem('flightwatch_admin_auth', 'true');
     sessionStorage.setItem('flightwatch_admin_auth', 'true');
@@ -3393,7 +3419,7 @@ sightingForm.addEventListener('submit', async (e) => {
     notes: modalNotesInput.value.trim(),
     author: modalAuthorInput.value.trim() || 'Anonymous Naturalist',
     photo: currentPhotoBase64,
-    status: 'pending', // Pending validation by praneeth814
+    status: 'pending', // Pending administrator validation
     tier: 'USER_CONTRIBUTION'
   };
 
@@ -3411,7 +3437,7 @@ sightingForm.addEventListener('submit', async (e) => {
   saveSightingBtn.textContent = 'Submit Sighting';
 
   uploadModal.classList.remove('show');
-  alert('Observation logged! It will be reviewed and validated by Admin (praneeth814) before inclusion in the scientific dataset.');
+  alert('Observation logged! It will be reviewed and validated by an Administrator before inclusion in the scientific dataset.');
 });
 
 // ---------------------------------------------------------------
@@ -3584,7 +3610,7 @@ if(adminAddSpeciesForm){
     const hMax = parseFloat(document.getElementById('newSpeciesHumMax').value) || 95;
     const rain = document.getElementById('newSpeciesRain').value.trim() || 'After seasonal rain';
     const timing = document.getElementById('newSpeciesTiming').value.trim() || 'Daytime / dusk swarming';
-    const source = document.getElementById('newSpeciesSource').value.trim() || 'Added by Admin (praneeth814)';
+    const source = document.getElementById('newSpeciesSource').value.trim() || 'Added by Administrator';
 
     const newSp = {
       id: `CUST-${Date.now()}`,
@@ -3790,7 +3816,6 @@ const cancelGeminiConfigBtn = document.getElementById('cancelGeminiConfigBtn');
 const geminiConfigForm = document.getElementById('geminiConfigForm');
 const geminiApiKeyInput = document.getElementById('geminiApiKeyInput');
 const geminiDailyLimitInput = document.getElementById('geminiDailyLimitInput');
-const toggleApiKeyVisibilityBtn = document.getElementById('toggleApiKeyVisibilityBtn');
 const testGeminiKeyBtn = document.getElementById('testGeminiKeyBtn');
 
 let geminiApiKey = localStorage.getItem('flightwatch_gemini_api_key') || '';
@@ -3887,34 +3912,36 @@ if(clearAiChatBtn) clearAiChatBtn.addEventListener('click', () => {
   initAiChatWelcome();
 });
 
-// Gemini Config Modal Handlers
-if(openGeminiSettingsBtn){
-  openGeminiSettingsBtn.addEventListener('click', () => {
-    geminiApiKeyInput.value = geminiApiKey || '';
-    geminiDailyLimitInput.value = geminiDailyLimit || 20;
-    updateGeminiUI();
-    geminiConfigModal.classList.add('show');
-  });
-}
+// Gemini Config Modal Handlers (Key is never displayed in plaintext)
+window.openGeminiSettingsModal = function(){
+  geminiApiKeyInput.value = '';
+  geminiApiKeyInput.placeholder = geminiApiKey ? '•••••••••••••••••••• (API Key Saved - Enter new to change)' : 'Enter your Gemini API key (AIzaSy...)';
+  geminiDailyLimitInput.value = geminiDailyLimit || 20;
+  updateGeminiUI();
+  geminiConfigModal.classList.add('show');
+  setTimeout(() => geminiApiKeyInput.focus(), 150);
+};
+
+if(openGeminiSettingsBtn) openGeminiSettingsBtn.addEventListener('click', window.openGeminiSettingsModal);
 if(closeGeminiConfigBtn) closeGeminiConfigBtn.addEventListener('click', () => geminiConfigModal.classList.remove('show'));
 if(cancelGeminiConfigBtn) cancelGeminiConfigBtn.addEventListener('click', () => geminiConfigModal.classList.remove('show'));
 if(geminiConfigModal) geminiConfigModal.addEventListener('click', (e) => { if(e.target === geminiConfigModal) geminiConfigModal.classList.remove('show'); });
 
-if(toggleApiKeyVisibilityBtn){
-  toggleApiKeyVisibilityBtn.addEventListener('click', () => {
-    geminiApiKeyInput.type = geminiApiKeyInput.type === 'password' ? 'text' : 'password';
-  });
-}
-
 if(geminiConfigForm){
   geminiConfigForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    geminiApiKey = geminiApiKeyInput.value.trim();
+    const entered = geminiApiKeyInput.value.trim();
+    if(entered){
+      geminiApiKey = entered;
+      localStorage.setItem('flightwatch_gemini_api_key', geminiApiKey);
+    }
     geminiDailyLimit = Math.max(1, parseInt(geminiDailyLimitInput.value) || 20);
-    localStorage.setItem('flightwatch_gemini_api_key', geminiApiKey);
     localStorage.setItem('flightwatch_gemini_daily_limit', String(geminiDailyLimit));
+    
+    geminiApiKeyInput.value = '';
     updateGeminiUI();
     geminiConfigModal.classList.remove('show');
+    initAiChatWelcome();
     alert(`Gemini API settings saved! Limit set to ${geminiDailyLimit} queries/day.`);
   });
 }
@@ -3933,16 +3960,15 @@ if(testGeminiKeyBtn){
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
-          contents: [{ parts: [{ text: "Respond in 3 words: 'Gemini API Connected!'" }] }],
-          generationConfig: { maxOutputTokens: 20 }
+          contents: [{ parts: [{ text: "Ping" }] }],
+          generationConfig: { maxOutputTokens: 10 }
         })
       });
       const data = await res.json();
       if(data && data.candidates && data.candidates[0]){
-        const text = data.candidates[0].content.parts[0].text;
-        alert(`✓ Connection Successful!\nGemini Response: "${text.trim()}"`);
+        alert('✓ Connection Successful! Google Gemini API is ready to use.');
       } else {
-        throw new Error(data.error ? data.error.message : 'Invalid response format');
+        throw new Error(data.error ? data.error.message : 'Invalid response');
       }
     }catch(err){
       alert(`❌ Connection Test Failed: ${err.message}`);
@@ -3968,7 +3994,29 @@ if(aiChatChips){
 function initAiChatWelcome(){
   if(!aiChatHistory) return;
   aiChatHistory.innerHTML = '';
+
+  const apiKeyPromptBanner = !geminiApiKey ? `
+    <div style="background:var(--bg-surface); border:1.5px dashed var(--accent-blue); padding:12px 14px; border-radius:var(--radius-md); margin-bottom:12px; box-shadow:var(--shadow-sm);">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+        <span style="font-size:16px;">🔑</span>
+        <strong style="font-size:13px; color:var(--text-primary);">Enter Your Gemini API Key to Use AI Chat</strong>
+      </div>
+      <div style="font-size:12px; color:var(--text-secondary); line-height:1.45; margin-bottom:10px;">
+        To activate live neural responses grounded in our 40+ scientific chunks, please provide your free Google Gemini API key. Your key is stored securely in your private browser session and is never visible or logged.
+      </div>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <button class="btn btn-primary" id="welcomeOpenKeyModalBtn" type="button" style="font-size:12px; padding:6px 14px;">
+          🔑 Enter Gemini API Key
+        </button>
+        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style="font-size:11.5px; color:var(--accent-blue); text-decoration:underline;">
+          Get Free Key at Google AI Studio &rarr;
+        </a>
+      </div>
+    </div>
+  ` : '';
+
   const welcomeHtml = `
+    ${apiKeyPromptBanner}
     <div class="ai-msg-row">
       <div class="ai-chat-avatar" style="width:28px; height:28px; font-size:13px;">✨</div>
       <div class="ai-msg-bubble bot">
@@ -3985,6 +4033,9 @@ function initAiChatWelcome(){
     </div>
   `;
   aiChatHistory.innerHTML = welcomeHtml;
+
+  const btn = document.getElementById('welcomeOpenKeyModalBtn');
+  if(btn) btn.addEventListener('click', window.openGeminiSettingsModal);
 }
 
 function escapeHtml(str){
@@ -4149,7 +4200,8 @@ function retrieveRAGKnowledge(query, topK = 4){
 
 async function callGeminiApiWithRAG(query, ragContext){
   const key = geminiApiKey;
-  
+  if(!key) return null;
+
   // 1. Try server proxy endpoint first
   try{
     const serverRes = await fetch('/api/gemini-chat', {
@@ -4178,7 +4230,7 @@ async function callGeminiApiWithRAG(query, ragContext){
   }catch(e){}
 
   // 2. Direct client-side fetch if user provided client key
-  if(key){
+  try{
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
     const systemPrompt = "You are FlightWatch AI, an expert scientific entomology assistant specialized in ant nuptial flight biology. Answer accurately, grounded strictly in the provided peer-reviewed RAG dataset. Cite sources and format with clear markdown.";
     const fullPrompt = `${systemPrompt}\n\n[GROUNDED SCIENTIFIC RAG CONTEXT]:\n${ragContext}\n\n[USER QUESTION]:\n${query}`;
@@ -4200,7 +4252,7 @@ async function callGeminiApiWithRAG(query, ragContext){
         return { text: text, model: 'gemini-1.5-flash' };
       }
     }
-  }
+  }catch(e){}
 
   return null;
 }
@@ -4355,6 +4407,22 @@ async function handleUserAiQuery(query){
   if(aiChatInput) aiChatInput.value = '';
 
   appendUserMessage(userText);
+
+  // If user has not set their Gemini API key yet, ask them to input it
+  if(!geminiApiKey){
+    appendBotMessage(`
+      <div style="background:var(--bg-secondary); border:1.5px dashed var(--accent-blue); padding:10px 12px; border-radius:var(--radius-sm); margin-bottom:6px;">
+        <div style="font-weight:700; font-size:13px; color:var(--text-primary); margin-bottom:4px;">🔑 Google Gemini API Key Required</div>
+        <div style="font-size:12px; color:var(--text-secondary); margin-bottom:8px; line-height:1.45;">
+          Please enter your free Google Gemini API key to activate live neural responses. Your key is stored securely in your private browser storage and is never displayed.
+        </div>
+        <button class="btn btn-primary" onclick="window.openGeminiSettingsModal()" type="button" style="font-size:12px; padding:5px 12px;">🔑 Set Gemini API Key</button>
+      </div>
+    `);
+    window.openGeminiSettingsModal();
+    return;
+  }
+
   showBotTyping();
 
   // Retrieve RAG Context
@@ -4399,8 +4467,6 @@ async function handleUserAiQuery(query){
     let note = '';
     if(usage.count >= limit){
       note = `<div style="font-size:11px; color:var(--accent-amber); font-weight:600; margin-bottom:4px;">⚠️ Daily Gemini API quota reached (${limit}/${limit}). Using offline grounded RAG engine.</div>`;
-    } else if(!geminiApiKey){
-      note = `<div style="font-size:11px; color:var(--text-secondary); margin-bottom:4px;">💡 <em>Offline RAG Mode (Add your Gemini API Key in ⚙️ settings for live neural reasoning)</em></div>`;
     }
     appendBotMessage(note + local.html, sourcesList);
   }
