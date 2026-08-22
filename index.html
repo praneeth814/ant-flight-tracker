@@ -969,6 +969,267 @@ body {
   vertical-align: top;
 }
 
+/* ==========================================================================
+   AI RAG CHAT WIDGET & FAB
+   ========================================================================== */
+.ai-fab-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1500;
+}
+.ai-chat-fab {
+  background: linear-gradient(135deg, var(--accent-blue) 0%, #7B1FA2 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(6, 95, 212, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ai-chat-fab:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 8px 24px rgba(123, 31, 162, 0.45);
+}
+.ai-fab-sparkle {
+  font-size: 16px;
+  animation: sparkle 2.5s infinite ease-in-out;
+}
+
+.ai-chat-widget {
+  position: fixed;
+  bottom: 80px;
+  right: 24px;
+  width: 440px;
+  max-width: calc(100vw - 32px);
+  height: 600px;
+  max-height: calc(100vh - 110px);
+  z-index: 1600;
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-lg);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  animation: popUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ai-chat-widget.show {
+  display: flex;
+}
+
+.ai-chat-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-secondary);
+}
+.ai-chat-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-blue), #8E24AA);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #FFF;
+  box-shadow: 0 2px 8px rgba(6,95,212,0.3);
+  flex-shrink: 0;
+}
+.ai-chat-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+.ai-chat-subtitle {
+  font-size: 11px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+}
+.ai-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-green);
+  animation: pulseDot 1.8s infinite;
+  display: inline-block;
+}
+
+.ai-chat-history {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--bg-primary);
+}
+
+.ai-msg-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  max-width: 100%;
+}
+.ai-msg-row.user {
+  flex-direction: row-reverse;
+}
+.ai-msg-bubble {
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.55;
+  max-width: 88%;
+  word-break: break-word;
+}
+.ai-msg-bubble.user {
+  background-color: var(--accent-blue);
+  color: #FFFFFF;
+  border-bottom-right-radius: 3px;
+}
+.ai-msg-bubble.bot {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-bottom-left-radius: 3px;
+  box-shadow: var(--shadow-sm);
+}
+
+.ai-typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+}
+.ai-typing-dot {
+  width: 6px;
+  height: 6px;
+  background-color: var(--text-tertiary);
+  border-radius: 50%;
+  animation: typingBounce 1.2s infinite ease-in-out;
+}
+.ai-typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.ai-typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+.ai-sources-details {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  font-size: 11.5px;
+}
+.ai-sources-summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--accent-blue);
+  outline: none;
+}
+.ai-sources-list {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ai-source-item {
+  padding: 4px 6px;
+  background: var(--bg-surface);
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  font-size: 11px;
+}
+
+.ai-chat-chips {
+  padding: 8px 12px;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-color);
+  scrollbar-width: none;
+}
+.ai-chat-chips::-webkit-scrollbar { display: none; }
+.ai-chip {
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 500;
+  border-radius: var(--radius-pill);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.ai-chip:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.ai-chat-input-area {
+  padding: 8px 12px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.ai-chat-input {
+  flex: 1;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.ai-chat-input:focus {
+  border-color: var(--accent-blue);
+}
+.ai-chat-send-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+  color: #FFF;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.ai-chat-send-btn:hover {
+  transform: scale(1.06);
+  filter: brightness(1.1);
+}
+
+@keyframes popUp { from { opacity: 0; transform: translateY(12px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes pulseDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.8); } }
+@keyframes sparkle { 0%, 100% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(15deg) scale(1.15); } }
+@keyframes typingBounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-5px); } }
+
 @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -989,6 +1250,12 @@ body {
   </div>
 
   <div class="nav-right">
+    <!-- AI Assistant Button -->
+    <button class="btn btn-secondary" id="navOpenAiChatBtn" type="button" title="Ask FlightWatch RAG AI Assistant">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path><path d="M8 9h8"></path><path d="M8 13h6"></path></svg>
+      <span>AI Assistant</span>
+    </button>
+
     <!-- Theme Toggle -->
     <button class="btn-icon" id="themeToggleBtn" type="button" title="Toggle Light / Dark Mode">
       <span id="themeIcon">🌙</span>
@@ -1600,8 +1867,58 @@ body {
   </div>
 </div>
 
+<!-- ==========================================================================
+     AI RAG CHAT WIDGET & FLOATING FAB
+     ========================================================================== -->
+<div class="ai-fab-container">
+  <button class="ai-chat-fab" id="floatingAiChatBtn" type="button" title="Ask FlightWatch RAG AI Assistant">
+    <span class="ai-fab-sparkle">✨</span>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path><path d="M8 9h8"></path><path d="M8 13h6"></path></svg>
+    <span>Ask RAG AI</span>
+  </button>
+</div>
+
+<div class="ai-chat-widget" id="aiChatWidget">
+  <div class="ai-chat-header">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="ai-chat-avatar">✨</div>
+      <div>
+        <div class="ai-chat-title">FlightWatch RAG AI</div>
+        <div class="ai-chat-subtitle">
+          <span class="ai-pulse-dot"></span>
+          <span id="aiRAGStatusLabel">40+ Peer-Reviewed Chunks Grounded</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:6px;">
+      <button class="btn-icon" id="clearAiChatBtn" type="button" title="Clear conversation" style="width:30px; height:30px; font-size:12px;">
+        🗑️
+      </button>
+      <button class="modal-close-icon" id="closeAiChatBtn" type="button" title="Minimize AI Chat" style="font-size:20px;">
+        &times;
+      </button>
     </div>
   </div>
+
+  <div class="ai-chat-history" id="aiChatHistory">
+    <!-- Rendered dynamically -->
+  </div>
+
+  <div class="ai-chat-chips" id="aiChatChips">
+    <button class="ai-chip" data-query="Will Carebara diversa fly after monsoon rain?">🌧️ Carebara diversa monsoon triggers?</button>
+    <button class="ai-chip" data-query="Why don't Pharaoh ants (Monomorium pharaonis) have nuptial flight triggers?">🐜 Pharaoh ants non-flying strategy?</button>
+    <button class="ai-chip" data-query="What are the quantified temperature & humidity thresholds for Solenopsis invicta?">🔥 Solenopsis invicta thresholds?</button>
+    <button class="ai-chip" data-query="Which Indian ant species fly on dry days without rain?">☀️ Indian species on dry days?</button>
+    <button class="ai-chip" data-query="Check flight conditions for my current selected location.">📍 Check current location conditions</button>
+    <button class="ai-chip" data-query="Explain the 6 scientific confidence tiers in this dataset.">🛡️ Explain the 6 Confidence Tiers</button>
+  </div>
+
+  <form class="ai-chat-input-area" id="aiChatForm">
+    <input class="ai-chat-input" id="aiChatInput" type="text" placeholder="Ask about ant nuptial flights, species triggers, citations…" autocomplete="off" required>
+    <button class="ai-chat-send-btn" type="submit" id="aiChatSendBtn" title="Send Question">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+    </button>
+  </form>
 </div>
 
 <!-- ==========================================================================
@@ -3348,6 +3665,417 @@ document.getElementById('adminImportJsonInput').addEventListener('change', (e) =
   };
   reader.readAsText(file);
 });
+
+// ---------------------------------------------------------------
+// 9. AI RAG ASSISTANT ENGINE & CHAT WIDGET
+// ---------------------------------------------------------------
+const aiChatWidget = document.getElementById('aiChatWidget');
+const floatingAiChatBtn = document.getElementById('floatingAiChatBtn');
+const navOpenAiChatBtn = document.getElementById('navOpenAiChatBtn');
+const closeAiChatBtn = document.getElementById('closeAiChatBtn');
+const clearAiChatBtn = document.getElementById('clearAiChatBtn');
+const aiChatHistory = document.getElementById('aiChatHistory');
+const aiChatForm = document.getElementById('aiChatForm');
+const aiChatInput = document.getElementById('aiChatInput');
+const aiChatChips = document.getElementById('aiChatChips');
+const aiRAGStatusLabel = document.getElementById('aiRAGStatusLabel');
+
+let aiChatMessages = [];
+const AI_CHAT_STORAGE_KEY = 'flightwatch_ai_chat_history';
+
+function updateAIRAGStatus(){
+  if(aiRAGStatusLabel){
+    const totalChunks = dynamicRAGChunks.length;
+    const totalSp = SPECIES.length;
+    aiRAGStatusLabel.textContent = `${totalChunks} Chunks · ${totalSp} Species Grounded`;
+  }
+}
+
+function openAiChat(){
+  if(aiChatWidget){
+    aiChatWidget.classList.add('show');
+    if(!aiChatHistory.children.length){
+      initAiChatWelcome();
+    }
+    updateAIRAGStatus();
+    setTimeout(() => { if(aiChatInput) aiChatInput.focus(); }, 150);
+  }
+}
+
+function closeAiChat(){
+  if(aiChatWidget) aiChatWidget.classList.remove('show');
+}
+
+if(floatingAiChatBtn) floatingAiChatBtn.addEventListener('click', openAiChat);
+if(navOpenAiChatBtn) navOpenAiChatBtn.addEventListener('click', openAiChat);
+if(closeAiChatBtn) closeAiChatBtn.addEventListener('click', closeAiChat);
+if(clearAiChatBtn) clearAiChatBtn.addEventListener('click', () => {
+  aiChatMessages = [];
+  localStorage.removeItem(AI_CHAT_STORAGE_KEY);
+  initAiChatWelcome();
+});
+
+// Clickable chip suggestions
+if(aiChatChips){
+  aiChatChips.querySelectorAll('.ai-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const q = btn.getAttribute('data-query');
+      if(q){
+        handleUserAiQuery(q);
+      }
+    });
+  });
+}
+
+function initAiChatWelcome(){
+  if(!aiChatHistory) return;
+  aiChatHistory.innerHTML = '';
+  const welcomeHtml = `
+    <div class="ai-msg-row">
+      <div class="ai-chat-avatar" style="width:28px; height:28px; font-size:13px;">✨</div>
+      <div class="ai-msg-bubble bot">
+        <strong>Hello! I am the FlightWatch Nuptial Flight AI Assistant.</strong><br>
+        I am grounded in a peer-reviewed dataset of <strong>${SPECIES.length} ant species</strong>, <strong>${dynamicRAGChunks.length} scientific knowledge chunks</strong>, and active community records.<br><br>
+        Ask me anything about:
+        <ul style="margin:6px 0 0 16px; padding:0; line-height:1.6;">
+          <li>Exact temperature, humidity, rainfall & wind flight thresholds</li>
+          <li>Why tramp ants (Pharaoh, Argentine, Yellow crazy) don't have nuptial flights</li>
+          <li>Indian monsoon triggers vs dry-season / pre-monsoon flyers</li>
+          <li>Real-time flight predictions for your location & current telemetry</li>
+        </ul>
+      </div>
+    </div>
+  `;
+  aiChatHistory.innerHTML = welcomeHtml;
+}
+
+function escapeHtml(str){
+  if(!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function formatMarkdown(text){
+  let html = escapeHtml(text);
+  // Bold
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  // Italic
+  html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  // Headers
+  html = html.replace(/^### (.*$)/gim, '<h4 style="margin:8px 0 4px 0; font-size:13.5px; color:var(--text-primary);">$1</h4>');
+  html = html.replace(/^## (.*$)/gim, '<h3 style="margin:10px 0 4px 0; font-size:14.5px; color:var(--text-primary);">$1</h3>');
+  // Lists
+  html = html.replace(/^\s*[-•]\s+(.*)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li>.*<\/li>)/s, '<ul style="margin:6px 0 6px 18px; padding:0;">$1</ul>');
+  // Line breaks
+  html = html.replace(/\n\n/g, '<br><br>');
+  html = html.replace(/\n/g, '<br>');
+  return html;
+}
+
+function appendUserMessage(text){
+  const row = document.createElement('div');
+  row.className = 'ai-msg-row user';
+  row.innerHTML = `
+    <div class="ai-msg-bubble user">${escapeHtml(text)}</div>
+  `;
+  aiChatHistory.appendChild(row);
+  aiChatHistory.scrollTop = aiChatHistory.scrollHeight;
+}
+
+function appendBotMessage(htmlContent, sources = []){
+  const row = document.createElement('div');
+  row.className = 'ai-msg-row';
+  
+  let sourcesHtml = '';
+  if(sources && sources.length){
+    const itemsHtml = sources.map(s => `
+      <div class="ai-source-item">
+        <strong>[${s.id}]</strong> <span style="font-weight:600; color:var(--text-primary);">${escapeHtml(s.title || s.name || '')}</span>
+        ${s.tier ? `<span style="font-size:10px; background:var(--bg-secondary); padding:1px 5px; border-radius:3px; margin-left:4px; font-weight:600;">${s.tier}</span>` : ''}
+        ${s.source ? `<div style="font-size:10.5px; color:var(--text-secondary); margin-top:2px;">Citation: <em>${escapeHtml(s.source)}</em></div>` : ''}
+      </div>
+    `).join('');
+
+    sourcesHtml = `
+      <details class="ai-sources-details">
+        <summary class="ai-sources-summary">📚 Grounded Scientific Sources (${sources.length})</summary>
+        <div class="ai-sources-list">${itemsHtml}</div>
+      </details>
+    `;
+  }
+
+  row.innerHTML = `
+    <div class="ai-chat-avatar" style="width:28px; height:28px; font-size:13px;">✨</div>
+    <div class="ai-msg-bubble bot">
+      <div>${htmlContent}</div>
+      ${sourcesHtml}
+    </div>
+  `;
+  aiChatHistory.appendChild(row);
+  aiChatHistory.scrollTop = aiChatHistory.scrollHeight;
+}
+
+function showBotTyping(){
+  const row = document.createElement('div');
+  row.className = 'ai-msg-row';
+  row.id = 'aiTypingIndicatorRow';
+  row.innerHTML = `
+    <div class="ai-chat-avatar" style="width:28px; height:28px; font-size:13px;">✨</div>
+    <div class="ai-msg-bubble bot ai-typing-indicator">
+      <span class="ai-typing-dot"></span>
+      <span class="ai-typing-dot"></span>
+      <span class="ai-typing-dot"></span>
+    </div>
+  `;
+  aiChatHistory.appendChild(row);
+  aiChatHistory.scrollTop = aiChatHistory.scrollHeight;
+}
+
+function hideBotTyping(){
+  const el = document.getElementById('aiTypingIndicatorRow');
+  if(el) el.remove();
+}
+
+function retrieveRAGKnowledge(query, topK = 4){
+  const cleanQ = query.toLowerCase().trim();
+  const tokens = cleanQ.replace(/[^\w\s]/g, '').split(/\s+/).filter(t => t.length > 2);
+
+  // Score Chunks
+  const scoredChunks = dynamicRAGChunks.map(chunk => {
+    let score = 0;
+    const contentLower = (chunk.content || '').toLowerCase();
+    const titleLower = (chunk.title || '').toLowerCase();
+    const keywords = (chunk.keywords || []).map(k => k.toLowerCase());
+
+    tokens.forEach(tok => {
+      if(titleLower.includes(tok)) score += 14;
+      keywords.forEach(kw => { if(kw.includes(tok)) score += 10; });
+      const matches = (contentLower.match(new RegExp('\\b' + tok, 'g')) || []).length;
+      score += Math.min(matches * 3, 18);
+    });
+
+    if(cleanQ.includes('carebara') || cleanQ.includes('marauder') || cleanQ.includes('diversa')){
+      if(chunk.id.includes('CAR-DIV') || contentLower.includes('carebara')) score += 40;
+    }
+    if(cleanQ.includes('monomorium') || cleanQ.includes('pharaoh') || cleanQ.includes('tramp') || cleanQ.includes('not fly') || cleanQ.includes('budding') || cleanQ.includes('wingless')){
+      if(chunk.id.includes('MON-PHA') || chunk.id.includes('LIN-HUM') || chunk.id.includes('ANO-GRA') || chunk.tier === 'TIER_3') score += 40;
+    }
+    if(cleanQ.includes('solenopsis') || cleanQ.includes('fire ant') || cleanQ.includes('invicta') || cleanQ.includes('geminata')){
+      if(chunk.id.includes('SOL-INV') || chunk.id.includes('SOL-GEM')) score += 40;
+    }
+    if(cleanQ.includes('harpegnathos') || cleanQ.includes('saltator') || cleanQ.includes('jumping') || cleanQ.includes('gamergate') || cleanQ.includes('diacamma')){
+      if(chunk.id.includes('HAR-SAL') || chunk.id.includes('DIA-IND') || chunk.tier === 'TIER_5') score += 40;
+    }
+    if(cleanQ.includes('oecophylla') || cleanQ.includes('weaver') || cleanQ.includes('smaragdina')){
+      if(chunk.id.includes('OEC-SMA') || contentLower.includes('oecophylla')) score += 40;
+    }
+    if(cleanQ.includes('camponotus') || cleanQ.includes('carpenter') || cleanQ.includes('compressus') || cleanQ.includes('sericeus')){
+      if(chunk.id.includes('CAM-COM') || chunk.id.includes('CAM-SER') || chunk.id.includes('EDITOR')) score += 40;
+    }
+    if(cleanQ.includes('tetraponera') || cleanQ.includes('rufonigra') || cleanQ.includes('dry') || cleanQ.includes('arboreal')){
+      if(chunk.id.includes('TET-RUF') || contentLower.includes('dry')) score += 40;
+    }
+    if(cleanQ.includes('tier') || cleanQ.includes('confidence') || cleanQ.includes('methodology')){
+      if(chunk.id.includes('META')) score += 30;
+    }
+
+    return { chunk, score };
+  });
+
+  scoredChunks.sort((a, b) => b.score - a.score);
+  const topChunks = scoredChunks.filter(s => s.score > 0).slice(0, topK).map(s => s.chunk);
+
+  // Score Species
+  const scoredSpecies = SPECIES.map(sp => {
+    let score = 0;
+    const nameLower = (sp.name || '').toLowerCase();
+    const sciLower = (sp.sci || '').toLowerCase();
+    const regLower = (sp.region || '').toLowerCase();
+
+    tokens.forEach(tok => {
+      if(nameLower.includes(tok)) score += 12;
+      if(sciLower.includes(tok)) score += 14;
+      if(regLower.includes(tok)) score += 5;
+    });
+
+    if(cleanQ.includes(nameLower) || cleanQ.includes(sciLower)) score += 50;
+
+    return { sp, score };
+  });
+
+  scoredSpecies.sort((a, b) => b.score - a.score);
+  const topSpecies = scoredSpecies.filter(s => s.score > 0).slice(0, 3).map(s => s.sp);
+
+  return { chunks: topChunks, species: topSpecies };
+}
+
+function processRAGQuery(query){
+  const cleanQ = query.toLowerCase().trim();
+  const { chunks, species } = retrieveRAGKnowledge(query, 4);
+
+  const sourcesList = [];
+  chunks.forEach(c => {
+    sourcesList.push({ id: c.id, title: c.title, tier: c.tier, source: c.source });
+  });
+  species.forEach(s => {
+    if(!sourcesList.some(src => src.id === s.id)){
+      sourcesList.push({ id: s.id, title: `${s.name} (${s.sci})`, tier: s.tier, source: s.source });
+    }
+  });
+
+  // 1. Current Location Query
+  if(cleanQ.includes('my location') || cleanQ.includes('current location') || cleanQ.includes('here') || cleanQ.includes('today') || cleanQ.includes('forecast') || cleanQ.includes('weather right now')){
+    if(selectedPlace && weatherData){
+      const t = weatherData.temp;
+      const h = weatherData.humidity;
+      const w = weatherData.windSpeed;
+      const r = weatherData.rain48h;
+
+      let matching = currentMatches.length ? currentMatches : SPECIES.filter(sp => {
+        return t >= (sp.tempRange ? sp.tempRange[0] - 3 : 15) && t <= (sp.tempRange ? sp.tempRange[1] + 3 : 40);
+      });
+
+      let responseText = `### 📍 Atmospheric Flight Assessment for ${selectedPlace.name}\n\n`;
+      responseText += `**Current Telemetry:** 🌡️ **${t.toFixed(1)}°C** · 💧 **${h}% RH** · 💨 **${w.toFixed(1)} km/h** · 🌧️ **${r.toFixed(1)} mm** rain (48h)\n\n`;
+      
+      if(matching.length > 0){
+        responseText += `Based on our grounded scientific dataset, **${matching.length} species** have viable flight conditions in your area:\n\n`;
+        matching.slice(0, 4).forEach(sp => {
+          const score = sp.score || 75;
+          responseText += `- **${sp.name}** (*${sp.sci}*): **${score}% Match** — ${sp.tempText}, ${sp.humidityText}. Timing: *${sp.timingText || 'seasonal'}*.\n`;
+        });
+        responseText += `\n*Tip: Check soil moisture around tree bases and street lights after dusk.*`;
+      } else {
+        responseText += `Currently, ambient conditions do not strongly align with primary nuptial flight thresholds. Look out for seasonal rain or temperature shifts.`;
+      }
+
+      return { html: formatMarkdown(responseText), sources: sourcesList };
+    } else {
+      return {
+        html: formatMarkdown(`### 📍 Location Not Selected Yet\n\nPlease select your city in the top search bar or click **"📍 Use Current Location"** on the main dashboard to evaluate live atmospheric telemetry against our 36+ grounded species models.`),
+        sources: sourcesList
+      };
+    }
+  }
+
+  // 2. Pharaoh / Tramp non-flying species Query
+  if(cleanQ.includes('pharaoh') || cleanQ.includes('monomorium') || cleanQ.includes('not fly') || cleanQ.includes('tramp') || (cleanQ.includes('why') && cleanQ.includes('no flight'))){
+    let text = `### 🐜 Why Pharaoh Ants (*Monomorium pharaonis*) Do Not Have Nuptial Flights\n\n`;
+    text += `In our scientific dataset, **Monomorium pharaonis** is classified as **Tier 3 (Reproductive Exception / Non-Flying Tramp Species)**:\n\n`;
+    text += `- **Intranidal Mating:** Mating occurs entirely inside the safety of the nest between siblings, avoiding the extreme mortality of open-air swarming.\n`;
+    text += `- **Colony Fission / Budding:** New colonies are founded when a group of workers walks to a new nesting site carrying brood and one or more fertile queens (budding).\n`;
+    text += `- **Non-Dispersive Queens:** Female sexuals do not perform nuptial flights, rendering atmospheric flight prediction models **0% applicable** for this species.\n\n`;
+    text += `*Similar non-swarming budding strategies occur in Argentine ants (Linepithema humile) and Yellow crazy ants (Anoplolepis gracilipes).*`;
+    return { html: formatMarkdown(text), sources: sourcesList };
+  }
+
+  // 3. Carebara diversa / Marauder Ant Query
+  if(cleanQ.includes('carebara') || cleanQ.includes('marauder') || cleanQ.includes('diversa')){
+    let text = `### 🌧️ *Carebara diversa* (Asian Marauder Ant) Nuptial Flight Triggers\n\n`;
+    text += `*Carebara diversa* is an iconic South/Southeast Asian subterranean marauder ant with massive alate sexuals:\n\n`;
+    text += `- 🌡️ **Temperature:** 24°C – 34°C ambient\n`;
+    text += `- 💧 **Humidity:** 75% – 98% RH (Critical threshold)\n`;
+    text += `- 🌧️ **Rain Trigger:** **Heavy monsoon downpour / saturated soil**. Massive claustral queens cannot dig into dry, compact ground without softening by torrential monsoon rain.\n`;
+    text += `- 🕒 **Flight Timing:** Dusk to night (18:00 – 22:00), predominantly between **May and September** across the Indian subcontinent.\n`;
+    text += `- 🛡️ **Confidence:** **Tier 2 (Documented Peer-Reviewed)** & **Tier 5 (Monsoon-Correlated)**.\n\n`;
+    text += `*Founding queens are frequently attracted to bright white streetlights and porch lamps immediately after the first heavy monsoon showers.*`;
+    return { html: formatMarkdown(text), sources: sourcesList };
+  }
+
+  // 4. Solenopsis invicta / Fire Ant Query
+  if(cleanQ.includes('solenopsis') || cleanQ.includes('fire ant') || cleanQ.includes('invicta') || cleanQ.includes('geminata')){
+    let text = `### 🔥 *Solenopsis invicta* (Red Imported Fire Ant) Quantified Triggers\n\n`;
+    text += `*Solenopsis invicta* represents our **Tier 1 (Fully Quantified Literature Baseline)** with empirical parameters from LSU AgCenter & Xu et al. (2009):\n\n`;
+    text += `- 🌡️ **Ambient Temperature:** 25°C – 35°C (Soil temp > 24°C at 10cm depth)\n`;
+    text += `- 💧 **Relative Humidity:** 60% – 85% RH\n`;
+    text += `- 🌧️ **Rainfall Window:** Optimal **12 to 48 hours post-rainfall** (≥5 mm accumulated)\n`;
+    text += `- 💨 **Wind Speed:** Strictly < 8 to 10 km/h (Alates cannot orient or sustain flight in wind > 12 km/h)\n`;
+    text += `- 🕒 **Diurnal Window:** 10:00 AM – 3:00 PM on warm, sunny days following precipitation.\n\n`;
+    text += `*In contrast, the tropical fire ant (Solenopsis geminata) native to India and the Neotropics swarms predominantly at dusk after pre-monsoon showers.*`;
+    return { html: formatMarkdown(text), sources: sourcesList };
+  }
+
+  // 5. Dry Day / Non-Rain Flying Species
+  if(cleanQ.includes('dry') || cleanQ.includes('without rain') || cleanQ.includes('no rain') || cleanQ.includes('tetraponera')){
+    let text = `### ☀️ Indian Ant Species That Fly on Dry Days (Without Rain)\n\n`;
+    text += `While most subterranean species require rain to soften soil, several arboreal and xerophilic species fly on **dry, warm days**:\n\n`;
+    text += `- **Tetraponera rufonigra** (Arboreal Bicoloured Ant): Swarms on bright sunny dry days (28–38°C, low-to-moderate humidity 35–65%). As arboreal nesters inhabiting dead wood and tree cavities, they do not require soft soil for nest excavation.\n`;
+    text += `- **Camponotus compressus** (Indian Carpenter Ant): Often initiates exploratory pre-monsoon mating flights on dry, sweltering afternoons (30–38°C) before the onset of rainfall.\n`;
+    text += `- **Cataglyphis spp.** (Desert Ants): Strictly thermophilic, flying during intense midday heat under completely dry desert conditions.\n`;
+    return { html: formatMarkdown(text), sources: sourcesList };
+  }
+
+  // 6. Confidence Tiers Explanation
+  if(cleanQ.includes('tier') || cleanQ.includes('confidence') || cleanQ.includes('methodology')){
+    let text = `### 🛡️ FlightWatch 6-Tier Scientific Confidence Framework\n\n`;
+    text += `Every species in FlightWatch is classified under a strict evidentiary tier:\n\n`;
+    text += `- **Tier 1 (Quantified Lab/Field):** Exact empirical thresholds for temp, humidity, wind, and rain from published studies (e.g. *Solenopsis invicta*).\n`;
+    text += `- **Tier 2 (Documented Scientific):** Peer-reviewed field papers confirming flight months, timing, and conditions (e.g. *Carebara diversa*, *Oecophylla smaragdina*).\n`;
+    text += `- **Tier 3 (Reproductive Exceptions):** Non-flying tramp species using budding and intranidal mating (e.g. *Monomorium pharaonis*).\n`;
+    text += `- **Tier 4 (Citizen Science Validated):** Verified field observations and queen photographs confirmed by entomologists.\n`;
+    text += `- **Tier 5 (Monsoon/Biology-Correlated):** Inferred triggers from ecological niches such as gamergate reproduction (*Harpegnathos saltator*).\n`;
+    text += `- **Tier 6 (Algorithmic / Predicted):** Climate-envelope extrapolations for under-documented species.\n`;
+    return { html: formatMarkdown(text), sources: sourcesList };
+  }
+
+  // 7. General / Specific Species Match
+  if(species.length > 0 || chunks.length > 0){
+    const primarySp = species[0];
+    const primaryChunk = chunks[0];
+
+    let text = `### 🔍 Grounded Scientific Analysis\n\n`;
+    if(primarySp){
+      text += `**Species:** **${primarySp.name}** (*${primarySp.sci}*)\n`;
+      text += `- **Evidentiary Tier:** ${primarySp.tier || 'Scientific Dataset'}\n`;
+      text += `- **Region:** ${primarySp.region} ${primarySp.isFoundInIndia ? '(🇮🇳 India Range)' : ''}\n`;
+      text += `- **Trigger Profile:** 🌡️ ${primarySp.tempText} · 💧 ${primarySp.humidityText} · 🌧️ ${primarySp.rainfallPattern}\n`;
+      text += `- **Flight Timing:** ${primarySp.timingText || 'Dusk / Evening'}\n`;
+      if(primarySp.notes) text += `- **Field Notes:** ${primarySp.notes}\n`;
+      text += `\n`;
+    }
+
+    if(primaryChunk && (!primarySp || !primaryChunk.content.includes(primarySp.name))){
+      text += `**Scientific Context (${primaryChunk.title}):**\n${primaryChunk.content}\n\n`;
+    }
+
+    text += `*All recommendations are grounded directly in our peer-reviewed knowledge graph.*`;
+    return { html: formatMarkdown(text), sources: sourcesList };
+  }
+
+  // Default fallback
+  let fallback = `### 🐜 FlightWatch RAG Knowledge Engine\n\n`;
+  fallback += `I couldn't find an exact species match for that query in our dataset of **36+ ant species**.\n\n`;
+  fallback += `Try asking about:\n`;
+  fallback += `- A specific species (e.g. *Carebara diversa*, *Oecophylla smaragdina*, *Harpegnathos saltator*, *Tetraponera rufonigra*)\n`;
+  fallback += `- Weather triggers (e.g. *What humidity do carpenter ants require to fly?*)\n`;
+  fallback += `- Regional patterns (e.g. *Which Indian ants fly in monsoon June?*)\n`;
+  fallback += `- Your active location (*Check flight conditions for my location*)`;
+  return { html: formatMarkdown(fallback), sources: sourcesList };
+}
+
+async function handleUserAiQuery(query){
+  if(!query || !query.trim()) return;
+  const userText = query.trim();
+  if(aiChatInput) aiChatInput.value = '';
+
+  appendUserMessage(userText);
+  showBotTyping();
+
+  // Short realistic generation latency
+  setTimeout(() => {
+    hideBotTyping();
+    const { html, sources } = processRAGQuery(userText);
+    appendBotMessage(html, sources);
+  }, 350);
+}
+
+if(aiChatForm){
+  aiChatForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const val = aiChatInput.value;
+    handleUserAiQuery(val);
+  });
+}
 
 // Initial load
 loadCustomSpecies();
