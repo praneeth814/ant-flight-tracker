@@ -1682,20 +1682,24 @@ body {
 
       <!-- Tab 2: Exports & Storage -->
       <div class="admin-tab-content" id="tab-exports">
-        <h4 style="margin-bottom:8px; font-size:16px;">Export & Import Citizen Observations</h4>
-        <p style="color:var(--text-secondary); font-size:13.5px; margin-bottom:16px;">Export user-submitted records as raw JSON or CSV for scientific analysis in Python/R.</p>
+        <h4 style="margin-bottom:8px; font-size:16px;">Export & Sync Data Files</h4>
+        <p style="color:var(--text-secondary); font-size:13px; margin-bottom:16px;">
+          Download updated <code>user_contributions.json</code> or <code>custom_species.json</code> to easily commit them to your GitHub repository, or export for scientific analysis.
+        </p>
         
-        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:24px;">
-          <button class="btn btn-secondary" id="adminExportJsonBtn" type="button">⬇️ Download JSON</button>
-          <button class="btn btn-secondary" id="adminExportCsvBtn" type="button">📊 Download CSV Table</button>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;">
+          <button class="btn btn-primary" id="adminDownloadUserContribsJsonBtn" type="button">⬇️ Download user_contributions.json</button>
+          <button class="btn btn-secondary" id="adminDownloadCustomSpeciesJsonBtn" type="button">⬇️ Download custom_species.json</button>
+          <button class="btn btn-secondary" id="adminCopyUserContribsJsonBtn" type="button">📋 Copy Contributions JSON</button>
+          <button class="btn btn-secondary" id="adminExportCsvBtn" type="button">📊 Download CSV</button>
           <label class="btn btn-outline" style="cursor:pointer; margin:0;">
-            ⬆️ Import JSON
+            ⬆️ Import & Merge JSON
             <input type="file" id="adminImportJsonInput" accept=".json" style="display:none;">
           </label>
         </div>
 
-        <div style="background:var(--bg-primary); padding:14px; border-radius:var(--radius-sm); font-size:13px;">
-          <strong>Storage Architecture:</strong> Peer-reviewed base dataset is frozen in memory; community contributions are stored in <code>user_contributions.json</code>; custom species are preserved in <code>custom_species.json</code>.
+        <div style="background:var(--bg-primary); padding:14px; border-radius:var(--radius-sm); font-size:12.5px; line-height:1.5;">
+          <strong>💡 GitHub Hosted Site Tip:</strong> When users submit observations on a static host (e.g. GitHub Pages), records are saved in their browser session. To update the repository's permanent <code>user_contributions.json</code> file, click <strong>"⬇️ Download user_contributions.json"</strong> above and push it to your GitHub repository!
         </div>
       </div>
 
@@ -1718,10 +1722,27 @@ body {
 
       <!-- Tab 4: API Settings -->
       <div class="admin-tab-content" id="tab-settings">
-        <h4 style="margin-bottom:8px; font-size:16px;">System Configuration</h4>
-        <p style="color:var(--text-secondary); font-size:13.5px; margin-bottom:14px;">Telemetry endpoints and external weather service configuration.</p>
+        <h4 style="margin-bottom:8px; font-size:16px;">Backend Server & API Configuration</h4>
+        <p style="color:var(--text-secondary); font-size:13px; margin-bottom:14px;">Connect your hosted frontend (e.g. GitHub Pages) to a live Python backend server on Render, Railway, or AWS.</p>
         
-        <div style="background:var(--bg-primary); padding:14px; border-radius:var(--radius-sm); font-size:13px; line-height:1.6;">
+        <div style="background:var(--bg-surface); border:1px solid var(--border-color); padding:14px; border-radius:var(--radius-sm); margin-bottom:16px;">
+          <div class="input-group" style="margin-bottom:10px;">
+            <div class="input-label">
+              <span>Backend API Server URL</span>
+              <span style="font-size:11px; color:var(--text-tertiary);">Leave empty if hosted together</span>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <input class="input-field" id="backendApiUrlInput" type="url" placeholder="https://your-app.onrender.com (or leave empty)" style="flex:1; min-width:240px;">
+              <button class="btn btn-secondary" id="testBackendConnectionBtn" type="button" style="white-space:nowrap;">🧪 Test Server</button>
+              <button class="btn btn-primary" id="saveBackendUrlBtn" type="button" style="white-space:nowrap;">Save URL</button>
+            </div>
+          </div>
+          <div id="backendStatusNotice" style="font-size:12px; margin-top:6px; color:var(--text-secondary);">
+            Status: Checking connection...
+          </div>
+        </div>
+
+        <div style="background:var(--bg-primary); padding:14px; border-radius:var(--radius-sm); font-size:12.5px; line-height:1.6;">
           • <strong>Weather Provider:</strong> Open-Meteo High-Resolution Numerical Weather Models (ERA5 / GFS).<br>
           • <strong>Geocoding:</strong> Open-Meteo Geocoding Engine + BigDataCloud Reverse Geocoder.<br>
           • <strong>Scientific Corpus:</strong> Peer-reviewed species + Custom Admin Registry, graded across Tiers 1–6.
@@ -2135,7 +2156,7 @@ adminLoginForm.addEventListener('submit', async (e) => {
 
   // 1. Authenticate with secure backend endpoint
   try{
-    const res = await fetch('/api/admin/login', {
+    const res = await fetch(getApiUrl('/api/admin/login'), {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ username: u, password: p })
@@ -2219,6 +2240,15 @@ document.querySelectorAll('#feedFilterBar .filter-chip').forEach(btn => {
   });
 });
 
+let apiBaseUrl = localStorage.getItem('flightwatch_api_base_url') || '';
+function getApiUrl(endpoint){
+  if(apiBaseUrl && apiBaseUrl.trim()){
+    const base = apiBaseUrl.trim().replace(/\/+$/, '');
+    return `${base}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
+  }
+  return endpoint;
+}
+
 // ---------------------------------------------------------------
 // 4. DATA STORE & VALIDATION LIFECYCLE
 // ---------------------------------------------------------------
@@ -2232,12 +2262,20 @@ async function loadCustomSpecies(){
   let serverCustom = [];
   let serverOnline = false;
   try{
-    const res = await fetch('/api/custom-species', { cache: 'no-store' });
+    const res = await fetch(getApiUrl('/api/custom-species'), { cache: 'no-store' });
     if(res.ok){
       serverCustom = await res.json();
       serverOnline = true;
+    } else {
+      const staticRes = await fetch('./custom_species.json', { cache: 'no-store' });
+      if(staticRes.ok) serverCustom = await staticRes.json();
     }
-  }catch(e){}
+  }catch(e){
+    try{
+      const staticRes = await fetch('./custom_species.json', { cache: 'no-store' });
+      if(staticRes.ok) serverCustom = await staticRes.json();
+    }catch(err){}
+  }
 
   const mergedMap = new Map();
   if(Array.isArray(serverCustom)){
@@ -2249,7 +2287,7 @@ async function loadCustomSpecies(){
       if(!mergedMap.has(String(sp.id))){
         mergedMap.set(String(sp.id), sp);
         if(serverOnline){
-          fetch('/api/custom-species', {
+          fetch(getApiUrl('/api/custom-species'), {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(sp)
@@ -2275,7 +2313,7 @@ window.deleteCustomSpecies = async function(id){
   customSpeciesList = customSpeciesList.filter(s => String(s.id) !== String(id));
   localStorage.setItem(LOCAL_STORAGE_CUSTOM_SPECIES_KEY, JSON.stringify(customSpeciesList));
   try{
-    await fetch(`/api/custom-species/${id}`, { method: 'DELETE' });
+    await fetch(getApiUrl(`/api/custom-species/${id}`), { method: 'DELETE' });
   }catch(e){}
   rebuildSpeciesDataset();
 };
@@ -2290,12 +2328,24 @@ async function loadUserSightings(){
   let serverList = [];
   let serverOnline = false;
   try{
-    const res = await fetch('/api/user-contributions', { cache: 'no-store' });
+    const res = await fetch(getApiUrl('/api/user-contributions'), { cache: 'no-store' });
     if(res.ok){
       serverList = await res.json();
       serverOnline = true;
+    } else {
+      const staticRes = await fetch('./user_contributions.json', { cache: 'no-store' });
+      if(staticRes.ok){
+        serverList = await staticRes.json();
+      }
     }
-  }catch(e){}
+  }catch(e){
+    try{
+      const staticRes = await fetch('./user_contributions.json', { cache: 'no-store' });
+      if(staticRes.ok){
+        serverList = await staticRes.json();
+      }
+    }catch(err){}
+  }
 
   const mergedMap = new Map();
   if(Array.isArray(serverList)){
@@ -2308,7 +2358,7 @@ async function loadUserSightings(){
       if(!existing){
         mergedMap.set(String(localItem.id), localItem);
         if(serverOnline){
-          fetch('/api/user-contributions', {
+          fetch(getApiUrl('/api/user-contributions'), {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(localItem)
@@ -2332,16 +2382,19 @@ async function persistUserSightings(newSighting){
   userSightings.unshift(newSighting);
   localStorage.setItem(LOCAL_STORAGE_BACKUP_KEY, JSON.stringify(userSightings));
 
+  let savedOnServer = false;
   try{
-    await fetch('/api/user-contributions', {
+    const res = await fetch(getApiUrl('/api/user-contributions'), {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(newSighting)
     });
+    if(res.ok) savedOnServer = true;
   }catch(err){}
 
   syncUserContributionsToRAG();
   renderAdminModerationList();
+  return savedOnServer;
 }
 
 window.validateSighting = async function(id){
@@ -2351,7 +2404,7 @@ window.validateSighting = async function(id){
     target.validatedAt = new Date().toISOString();
     localStorage.setItem(LOCAL_STORAGE_BACKUP_KEY, JSON.stringify(userSightings));
     try{
-      await fetch(`/api/user-contributions/approve/${id}`, { method: 'POST' });
+      await fetch(getApiUrl(`/api/user-contributions/approve/${id}`), { method: 'POST' });
     }catch(err){}
     syncUserContributionsToRAG();
     renderAdminModerationList();
@@ -2364,7 +2417,7 @@ window.rejectSighting = async function(id){
     target.status = 'rejected';
     localStorage.setItem(LOCAL_STORAGE_BACKUP_KEY, JSON.stringify(userSightings));
     try{
-      await fetch(`/api/user-contributions/reject/${id}`, { method: 'POST' });
+      await fetch(getApiUrl(`/api/user-contributions/reject/${id}`), { method: 'POST' });
     }catch(err){}
     syncUserContributionsToRAG();
     renderAdminModerationList();
@@ -2377,7 +2430,7 @@ window.updateSightingSpecies = async function(id, newSpecies){
     target.species = newSpecies;
     localStorage.setItem(LOCAL_STORAGE_BACKUP_KEY, JSON.stringify(userSightings));
     try{
-      await fetch(`/api/user-contributions/${id}`, {
+      await fetch(getApiUrl(`/api/user-contributions/${id}`), {
         method: 'PUT',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ species: newSpecies })
@@ -2394,7 +2447,7 @@ window.deleteUserSighting = async function(id){
   localStorage.setItem(LOCAL_STORAGE_BACKUP_KEY, JSON.stringify(userSightings));
 
   try{
-    await fetch(`/api/user-contributions/${id}`, { method: 'DELETE' });
+    await fetch(getApiUrl(`/api/user-contributions/${id}`), { method: 'DELETE' });
   }catch(err){}
 
   syncUserContributionsToRAG();
@@ -3641,7 +3694,7 @@ if(adminAddSpeciesForm){
     localStorage.setItem(LOCAL_STORAGE_CUSTOM_SPECIES_KEY, JSON.stringify(customSpeciesList));
 
     try{
-      await fetch('/api/custom-species', {
+      await fetch(getApiUrl('/api/custom-species'), {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(newSp)
@@ -3740,7 +3793,7 @@ if(adminEditSightingForm){
     localStorage.setItem(LOCAL_STORAGE_BACKUP_KEY, JSON.stringify(userSightings));
 
     try{
-      await fetch(`/api/user-contributions/${id}`, {
+      await fetch(getApiUrl(`/api/user-contributions/${id}`), {
         method: 'PUT',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(updates)
@@ -3753,46 +3806,119 @@ if(adminEditSightingForm){
   });
 }
 
-// Exports
-document.getElementById('adminExportJsonBtn').addEventListener('click', () => {
-  const blob = new Blob([JSON.stringify(userSightings, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = `user_contributions_${new Date().toISOString().slice(0,10)}.json`;
-  a.click();
-});
+// Direct Data Downloads & Sync
+const adminDownloadUserContribsJsonBtn = document.getElementById('adminDownloadUserContribsJsonBtn');
+if(adminDownloadUserContribsJsonBtn){
+  adminDownloadUserContribsJsonBtn.addEventListener('click', () => {
+    const jsonStr = JSON.stringify(userSightings, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'user_contributions.json';
+    a.click();
+  });
+}
 
-document.getElementById('adminExportCsvBtn').addEventListener('click', () => {
-  const headers = ['ID', 'Species', 'Location', 'Latitude', 'Longitude', 'Date_Time', 'Weather_Summary', 'Notes', 'Author', 'Status'];
-  const rows = userSightings.map(s => [
-    `"${s.id}"`, `"${(s.species||'').replace(/"/g,'""')}"`, `"${(s.location||'').replace(/"/g,'""')}"`,
-    s.lat||'', s.lon||'', `"${s.dateTime||''}"`, `"${(s.weatherSummary||'').replace(/"/g,'""')}"`,
-    `"${(s.notes||'').replace(/"/g,'""')}"`, `"${(s.author||'').replace(/"/g,'""')}"`,
-    `"${s.status||'pending'}"`
-  ]);
-  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
-  a.download = `user_contributions_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-});
+const adminDownloadCustomSpeciesJsonBtn = document.getElementById('adminDownloadCustomSpeciesJsonBtn');
+if(adminDownloadCustomSpeciesJsonBtn){
+  adminDownloadCustomSpeciesJsonBtn.addEventListener('click', () => {
+    const jsonStr = JSON.stringify(customSpeciesList, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'custom_species.json';
+    a.click();
+  });
+}
 
-document.getElementById('adminImportJsonInput').addEventListener('change', (e) => {
-  const file = e.target.files && e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = async (evt) => {
+const adminCopyUserContribsJsonBtn = document.getElementById('adminCopyUserContribsJsonBtn');
+if(adminCopyUserContribsJsonBtn){
+  adminCopyUserContribsJsonBtn.addEventListener('click', async () => {
     try{
-      const data = JSON.parse(evt.target.result);
-      if(Array.isArray(data)){
-        userSightings = data;
-        localStorage.setItem(LOCAL_STORAGE_BACKUP_KEY, JSON.stringify(userSightings));
-        syncUserContributionsToRAG();
-        renderAdminModerationList();
-        alert(`Imported ${data.length} records.`);
-      }
-    }catch(err){ alert('Invalid JSON file.'); }
-  };
-  reader.readAsText(file);
-});
+      await navigator.clipboard.writeText(JSON.stringify(userSightings, null, 2));
+      alert(`Copied ${userSightings.length} user contributions to clipboard! You can paste it into user_contributions.json in your GitHub repo.`);
+    }catch(err){
+      alert('Failed to copy to clipboard.');
+    }
+  });
+}
+
+const adminExportCsvBtn = document.getElementById('adminExportCsvBtn');
+if(adminExportCsvBtn){
+  adminExportCsvBtn.addEventListener('click', () => {
+    const headers = ['ID', 'Species', 'Location', 'Latitude', 'Longitude', 'Date_Time', 'Weather_Summary', 'Notes', 'Author', 'Status'];
+    const rows = userSightings.map(s => [
+      `"${s.id}"`, `"${(s.species||'').replace(/"/g,'""')}"`, `"${(s.location||'').replace(/"/g,'""')}"`,
+      s.lat||'', s.lon||'', `"${s.dateTime||''}"`, `"${(s.weatherSummary||'').replace(/"/g,'""')}"`,
+      `"${(s.notes||'').replace(/"/g,'""')}"`, `"${(s.author||'').replace(/"/g,'""')}"`,
+      `"${s.status||'pending'}"`
+    ]);
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+    a.download = `user_contributions_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+  });
+}
+
+const adminImportJsonInput = document.getElementById('adminImportJsonInput');
+if(adminImportJsonInput){
+  adminImportJsonInput.addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try{
+        const data = JSON.parse(evt.target.result);
+        if(Array.isArray(data)){
+          userSightings = data;
+          localStorage.setItem(LOCAL_STORAGE_BACKUP_KEY, JSON.stringify(userSightings));
+          syncUserContributionsToRAG();
+          renderAdminModerationList();
+          alert(`Imported ${data.length} records.`);
+        }
+      }catch(err){ alert('Invalid JSON file.'); }
+    };
+    reader.readAsText(file);
+  });
+}
+
+// Backend Server Configuration
+const backendApiUrlInput = document.getElementById('backendApiUrlInput');
+const testBackendConnectionBtn = document.getElementById('testBackendConnectionBtn');
+const saveBackendUrlBtn = document.getElementById('saveBackendUrlBtn');
+const backendStatusNotice = document.getElementById('backendStatusNotice');
+
+async function testBackendConnection(){
+  if(!backendStatusNotice) return;
+  backendStatusNotice.textContent = 'Testing backend connectivity…';
+  const testUrl = getApiUrl('/api/health');
+  try{
+    const res = await fetch(testUrl, { cache: 'no-store' });
+    if(res.ok){
+      const data = await res.json();
+      backendStatusNotice.innerHTML = `<span style="color:var(--accent-green); font-weight:700;">🟢 Live Backend Connected!</span> Server time: ${data.server_time || 'online'} · Syncing to <code>user_contributions.json</code>`;
+    } else {
+      throw new Error(`Server returned status ${res.status}`);
+    }
+  }catch(err){
+    backendStatusNotice.innerHTML = `<span style="color:var(--accent-amber); font-weight:700;">🟡 Static Host Mode (Local Browser Storage)</span><br>No live server at this URL. Contributions are safely preserved in browser storage. Download JSON above to commit to GitHub.`;
+  }
+}
+
+if(testBackendConnectionBtn) testBackendConnectionBtn.addEventListener('click', testBackendConnection);
+
+if(saveBackendUrlBtn){
+  saveBackendUrlBtn.addEventListener('click', () => {
+    apiBaseUrl = (backendApiUrlInput ? backendApiUrlInput.value.trim() : '');
+    localStorage.setItem('flightwatch_api_base_url', apiBaseUrl);
+    testBackendConnection();
+    alert('Backend API URL saved!');
+  });
+}
+
+if(backendApiUrlInput){
+  backendApiUrlInput.value = apiBaseUrl;
+}
 
 // ---------------------------------------------------------------
 // 9. AI RAG ASSISTANT ENGINE & GOOGLE GEMINI INTEGRATION
@@ -3864,7 +3990,7 @@ function updateGeminiUI(){
 
 async function syncServerGeminiUsage(){
   try{
-    const res = await fetch('/api/gemini-usage');
+    const res = await fetch(getApiUrl('/api/gemini-usage'));
     if(res.ok){
       const data = await res.json();
       if(data && typeof data.today === 'number'){
@@ -4204,7 +4330,7 @@ async function callGeminiApiWithRAG(query, ragContext){
 
   // 1. Try server proxy endpoint first
   try{
-    const serverRes = await fetch('/api/gemini-chat', {
+    const serverRes = await fetch(getApiUrl('/api/gemini-chat'), {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({

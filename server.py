@@ -59,15 +59,40 @@ class FlightWatchHandler(http.server.SimpleHTTPRequestHandler):
         # Enable CORS and disable caching for API endpoints
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
         super().end_headers()
 
     def do_OPTIONS(self):
         self.send_response(200)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
         self.end_headers()
 
     def do_GET(self):
-        if self.path == '/api/user-contributions':
+        clean_path = self.path.split('?')[0].rstrip('/')
+
+        if clean_path == '/api/health':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            self.end_headers()
+            contribs = 0
+            if os.path.exists(USER_DATA_FILE):
+                try:
+                    with open(USER_DATA_FILE, 'r', encoding='utf-8') as f:
+                        contribs = len(json.load(f))
+                except Exception:
+                    pass
+            self.wfile.write(json.dumps({
+                "status": "ok",
+                "service": "FlightWatch Backend Server",
+                "total_contributions": contribs,
+                "server_time": datetime.datetime.now().isoformat()
+            }).encode('utf-8'))
+            return
+
+        if clean_path == '/api/user-contributions':
             self.send_response(200)
             self.send_header('Content-Type', 'application/json; charset=utf-8')
             self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
@@ -83,7 +108,7 @@ class FlightWatchHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
             return
 
-        if self.path == '/api/custom-species':
+        if clean_path == '/api/custom-species':
             self.send_response(200)
             self.send_header('Content-Type', 'application/json; charset=utf-8')
             self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
@@ -99,7 +124,7 @@ class FlightWatchHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
             return
 
-        if self.path == '/api/gemini-usage':
+        if clean_path == '/api/gemini-usage':
             self.send_response(200)
             self.send_header('Content-Type', 'application/json; charset=utf-8')
             self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
@@ -116,7 +141,9 @@ class FlightWatchHandler(http.server.SimpleHTTPRequestHandler):
         return super().do_GET()
 
     def do_POST(self):
-        if self.path == '/api/admin/login':
+        clean_path = self.path.split('?')[0].rstrip('/')
+
+        if clean_path == '/api/admin/login':
             content_length = int(self.headers.get('Content-Length', 0))
             post_body = self.rfile.read(content_length)
             try:
@@ -256,20 +283,20 @@ class FlightWatchHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps({
                     "status": "error",
                     "fallback": True,
-                    "error": str(e),
+                "error": str(e),
                     "usage": {"today": get_gemini_usage()['count'], "limit": DAILY_LIMIT}
                 }).encode('utf-8'))
                 return
 
-        if self.path.startswith('/api/user-contributions/approve/'):
-            sighting_id = self.path.split('/')[-1]
+        if clean_path.startswith('/api/user-contributions/approve/'):
+            sighting_id = clean_path.split('/')[-1]
             return self._update_sighting_status(sighting_id, 'approved')
 
-        if self.path.startswith('/api/user-contributions/reject/'):
-            sighting_id = self.path.split('/')[-1]
+        if clean_path.startswith('/api/user-contributions/reject/'):
+            sighting_id = clean_path.split('/')[-1]
             return self._update_sighting_status(sighting_id, 'rejected')
 
-        if self.path == '/api/user-contributions':
+        if clean_path == '/api/user-contributions':
             content_length = int(self.headers.get('Content-Length', 0))
             post_body = self.rfile.read(content_length)
             
@@ -298,9 +325,11 @@ class FlightWatchHandler(http.server.SimpleHTTPRequestHandler):
                     else:
                         current_data.insert(0, new_entry)
 
-                # Save back to separate user_contributions.json
+                # Save back to separate user_contributions.json with flush
                 with open(USER_DATA_FILE, 'w', encoding='utf-8') as f:
                     json.dump(current_data, f, indent=2, ensure_ascii=False)
+                    f.flush()
+                    os.fsync(f.fileno())
 
                 self.send_response(201)
                 self.send_header('Content-Type', 'application/json; charset=utf-8')
@@ -317,7 +346,7 @@ class FlightWatchHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps({"status": "error", "error": str(e)}).encode('utf-8'))
             return
 
-        if self.path == '/api/custom-species':
+        if clean_path == '/api/custom-species':
             content_length = int(self.headers.get('Content-Length', 0))
             post_body = self.rfile.read(content_length)
             try:
@@ -342,6 +371,8 @@ class FlightWatchHandler(http.server.SimpleHTTPRequestHandler):
 
                 with open(CUSTOM_SPECIES_FILE, 'w', encoding='utf-8') as f:
                     json.dump(current_species, f, indent=2, ensure_ascii=False)
+                    f.flush()
+                    os.fsync(f.fileno())
 
                 self.send_response(201)
                 self.send_header('Content-Type', 'application/json; charset=utf-8')
@@ -361,8 +392,9 @@ class FlightWatchHandler(http.server.SimpleHTTPRequestHandler):
         self.send_error(404, "Endpoint not found")
 
     def do_PUT(self):
-        if self.path.startswith('/api/user-contributions/'):
-            sighting_id = self.path.split('/')[-1]
+        clean_path = self.path.split('?')[0].rstrip('/')
+        if clean_path.startswith('/api/user-contributions/'):
+            sighting_id = clean_path.split('/')[-1]
             content_length = int(self.headers.get('Content-Length', 0))
             put_body = self.rfile.read(content_length)
             try:
@@ -382,6 +414,8 @@ class FlightWatchHandler(http.server.SimpleHTTPRequestHandler):
                 if updated:
                     with open(USER_DATA_FILE, 'w', encoding='utf-8') as f:
                         json.dump(current_data, f, indent=2, ensure_ascii=False)
+                        f.flush()
+                        os.fsync(f.fileno())
 
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json; charset=utf-8')
@@ -414,6 +448,8 @@ class FlightWatchHandler(http.server.SimpleHTTPRequestHandler):
 
             with open(USER_DATA_FILE, 'w', encoding='utf-8') as f:
                 json.dump(current_data, f, indent=2, ensure_ascii=False)
+                f.flush()
+                os.fsync(f.fileno())
 
             self.send_response(200)
             self.send_header('Content-Type', 'application/json; charset=utf-8')
@@ -429,8 +465,9 @@ class FlightWatchHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(json.dumps({"status": "error", "error": str(e)}).encode('utf-8'))
 
     def do_DELETE(self):
-        if self.path.startswith('/api/user-contributions/'):
-            sighting_id = self.path.split('/')[-1]
+        clean_path = self.path.split('?')[0].rstrip('/')
+        if clean_path.startswith('/api/user-contributions/'):
+            sighting_id = clean_path.split('/')[-1]
             try:
                 current_data = []
                 if os.path.exists(USER_DATA_FILE):
@@ -441,6 +478,8 @@ class FlightWatchHandler(http.server.SimpleHTTPRequestHandler):
                 
                 with open(USER_DATA_FILE, 'w', encoding='utf-8') as f:
                     json.dump(filtered_data, f, indent=2, ensure_ascii=False)
+                    f.flush()
+                    os.fsync(f.fileno())
 
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json; charset=utf-8')
@@ -457,26 +496,28 @@ class FlightWatchHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps({"status": "error", "error": str(e)}).encode('utf-8'))
             return
 
-        if self.path.startswith('/api/custom-species/'):
-            species_id = self.path.split('/')[-1]
+        if clean_path.startswith('/api/custom-species/'):
+            sp_id = clean_path.split('/')[-1]
             try:
                 current_species = []
                 if os.path.exists(CUSTOM_SPECIES_FILE):
                     with open(CUSTOM_SPECIES_FILE, 'r', encoding='utf-8') as f:
                         current_species = json.load(f)
                 
-                filtered_species = [s for s in current_species if str(s.get('id')) != species_id]
+                filtered = [s for s in current_species if str(s.get('id')) != sp_id]
                 
                 with open(CUSTOM_SPECIES_FILE, 'w', encoding='utf-8') as f:
-                    json.dump(filtered_species, f, indent=2, ensure_ascii=False)
+                    json.dump(filtered, f, indent=2, ensure_ascii=False)
+                    f.flush()
+                    os.fsync(f.fileno())
 
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json; charset=utf-8')
                 self.end_headers()
                 self.wfile.write(json.dumps({
                     "status": "success",
-                    "message": f"Deleted custom species {species_id}",
-                    "total_custom_species": len(filtered_species)
+                    "message": f"Deleted custom species {sp_id}",
+                    "total_custom_species": len(filtered)
                 }).encode('utf-8'))
             except Exception as e:
                 self.send_response(400)
