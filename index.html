@@ -322,7 +322,7 @@ body {
   box-shadow: var(--shadow-md);
   max-height: 220px;
   overflow-y: auto;
-  z-index: 100;
+  z-index: 1050;
   display: none;
   margin-top: 4px;
 }
@@ -1210,10 +1210,31 @@ body {
         </div>
 
         <!-- Location -->
-        <div class="input-group" style="margin-bottom:14px;">
-          <div class="input-label">Location Found</div>
-          <input class="input-field" id="modalLocInput" type="text" placeholder="City, park, or landmark…" required>
+        <div class="input-group" style="margin-bottom:14px; position:relative;">
+          <div class="input-label">
+            <span>Location Found</span>
+            <span id="modalLocStatusMsg" style="font-size:11.5px; font-weight:500; color:var(--accent-blue);"></span>
+          </div>
+          <input class="input-field" id="modalLocInput" type="text" placeholder="Search city, area, or landmark…" autocomplete="off" required>
           <div class="suggest-box" id="modalSuggestBox"></div>
+          
+          <div class="loc-action-btns" style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+            <button class="btn btn-secondary" id="modalUseLocBtn" type="button" style="font-size:12px; padding:5px 12px;">
+              📍 Use Current Location
+            </button>
+            <button class="btn btn-secondary" id="modalMapToggleBtn" type="button" style="font-size:12px; padding:5px 12px;">
+              🗺️ Select on Map
+            </button>
+          </div>
+
+          <!-- Modal Map Drawer -->
+          <div class="map-drawer" id="modalMapDrawer" style="margin-top:10px;">
+            <div id="modalMapContainer" style="height:220px; width:100%;"></div>
+            <div style="font-size:11.5px; color:var(--text-secondary); padding:6px 12px; display:flex; justify-content:space-between; align-items:center; background:var(--bg-secondary);">
+              <span>Click anywhere or drag pin to choose spot.</span>
+              <span id="modalCoordReadout" style="font-weight:600; color:var(--text-primary);"></span>
+            </div>
+          </div>
         </div>
 
         <!-- Date & Time -->
@@ -2387,7 +2408,17 @@ const modalNotesInput = document.getElementById('modalNotesInput');
 const modalAutoWeatherCheck = document.getElementById('modalAutoWeatherCheck');
 const saveSightingBtn = document.getElementById('saveSightingBtn');
 
+const modalUseLocBtn = document.getElementById('modalUseLocBtn');
+const modalMapToggleBtn = document.getElementById('modalMapToggleBtn');
+const modalMapDrawer = document.getElementById('modalMapDrawer');
+const modalCoordReadout = document.getElementById('modalCoordReadout');
+const modalLocStatusMsg = document.getElementById('modalLocStatusMsg');
+
 let currentPhotoBase64 = '';
+let modalSelectedPlace = null;
+let modalLeafMap = null;
+let modalLeafMarker = null;
+let modalGeoTimer = null;
 
 function populateSpeciesOptions(){
   const optgroups = modalSpeciesSelect.querySelectorAll('optgroup');
@@ -2417,11 +2448,142 @@ modalSpeciesSelect.addEventListener('change', () => {
   }
 });
 
+// Autocomplete for Modal Location
+modalLocInput.addEventListener('input', () => {
+  modalSelectedPlace = null;
+  if(modalCoordReadout) modalCoordReadout.textContent = '';
+  clearTimeout(modalGeoTimer);
+  const q = modalLocInput.value.trim();
+  if(q.length < 2){ modalSuggestBox.classList.remove('show'); return; }
+  modalGeoTimer = setTimeout(() => fetchGeocode(q, modalSuggestBox, (p) => {
+    modalSelectedPlace = p;
+    modalLocInput.value = p.name;
+    if(modalCoordReadout) modalCoordReadout.textContent = `${p.lat.toFixed(4)}, ${p.lon.toFixed(4)}`;
+    syncModalMapToPlace(13);
+  }), 250);
+});
+
+// Modal Map Initialization & Pinning
+function initModalMap(){
+  if(modalLeafMap) return;
+  const lat = modalSelectedPlace ? modalSelectedPlace.lat : (selectedPlace ? selectedPlace.lat : 20.5937);
+  const lon = modalSelectedPlace ? modalSelectedPlace.lon : (selectedPlace ? selectedPlace.lon : 78.9629);
+  modalLeafMap = L.map('modalMapContainer').setView([lat, lon], (modalSelectedPlace || selectedPlace) ? 12 : 4);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(modalLeafMap);
+
+  if(modalSelectedPlace){
+    placeModalMapPin(modalSelectedPlace.lat, modalSelectedPlace.lon);
+  } else if(selectedPlace){
+    placeModalMapPin(selectedPlace.lat, selectedPlace.lon);
+  }
+
+  modalLeafMap.on('click', (e) => {
+    placeModalMapPin(e.latlng.lat, e.latlng.lng);
+    if(modalLocStatusMsg) modalLocStatusMsg.textContent = 'Resolving address…';
+    resolveReverse(e.latlng.lat, e.latlng.lng, (name) => {
+      modalSelectedPlace = { name, lat: e.latlng.lat, lon: e.latlng.lng };
+      modalLocInput.value = name;
+      if(modalLocStatusMsg) modalLocStatusMsg.textContent = '';
+    });
+  });
+}
+
+function placeModalMapPin(lat, lon){
+  if(modalLeafMarker){
+    modalLeafMarker.setLatLng([lat, lon]);
+  } else {
+    modalLeafMarker = L.marker([lat, lon], { draggable: true }).addTo(modalLeafMap);
+    modalLeafMarker.on('dragend', () => {
+      const p = modalLeafMarker.getLatLng();
+      if(modalCoordReadout) modalCoordReadout.textContent = `${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}`;
+      if(modalLocStatusMsg) modalLocStatusMsg.textContent = 'Resolving address…';
+      resolveReverse(p.lat, p.lng, (name) => {
+        modalSelectedPlace = { name, lat: p.lat, lon: p.lng };
+        modalLocInput.value = name;
+        if(modalLocStatusMsg) modalLocStatusMsg.textContent = '';
+      });
+    });
+  }
+  if(modalCoordReadout) modalCoordReadout.textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+}
+
+function syncModalMapToPlace(zoom){
+  if(!modalSelectedPlace) return;
+  if(modalMapDrawer && modalMapDrawer.classList.contains('show')){
+    initModalMap();
+    modalLeafMap.setView([modalSelectedPlace.lat, modalSelectedPlace.lon], zoom || 13);
+    placeModalMapPin(modalSelectedPlace.lat, modalSelectedPlace.lon);
+  }
+}
+
+if(modalMapToggleBtn){
+  modalMapToggleBtn.addEventListener('click', () => {
+    const isShow = modalMapDrawer.classList.toggle('show');
+    if(isShow){
+      initModalMap();
+      setTimeout(() => {
+        if(modalLeafMap){
+          modalLeafMap.invalidateSize();
+          if(modalSelectedPlace){
+            modalLeafMap.setView([modalSelectedPlace.lat, modalSelectedPlace.lon], 13);
+            placeModalMapPin(modalSelectedPlace.lat, modalSelectedPlace.lon);
+          }
+        }
+      }, 100);
+    }
+  });
+}
+
+if(modalUseLocBtn){
+  modalUseLocBtn.addEventListener('click', () => {
+    if(!navigator.geolocation){
+      if(modalLocStatusMsg) modalLocStatusMsg.textContent = 'Geolocation not supported.';
+      return;
+    }
+    if(modalLocStatusMsg) modalLocStatusMsg.textContent = 'Acquiring GPS location…';
+    navigator.geolocation.getCurrentPosition(pos => {
+      const { latitude, longitude } = pos.coords;
+      if(modalCoordReadout) modalCoordReadout.textContent = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+      resolveReverse(latitude, longitude, (name) => {
+        modalSelectedPlace = { name, lat: latitude, lon: longitude };
+        modalLocInput.value = name;
+        if(modalLocStatusMsg) modalLocStatusMsg.textContent = 'GPS acquired ✓';
+        setTimeout(() => { if(modalLocStatusMsg) modalLocStatusMsg.textContent = ''; }, 3500);
+        syncModalMapToPlace(14);
+      });
+    }, () => {
+      if(modalLocStatusMsg) modalLocStatusMsg.textContent = 'Could not acquire GPS position.';
+    }, { enableHighAccuracy: true, timeout: 10000 });
+  });
+}
+
 function openUploadFlow(){
   uploadModal.classList.add('show');
   modalDateInput.value = dateInput.value;
   modalTimeInput.value = timeInput.value;
-  if(selectedPlace) modalLocInput.value = selectedPlace.name;
+  if(modalLocStatusMsg) modalLocStatusMsg.textContent = '';
+  
+  if(selectedPlace){
+    modalSelectedPlace = { ...selectedPlace };
+    modalLocInput.value = selectedPlace.name;
+    if(modalCoordReadout) modalCoordReadout.textContent = `${selectedPlace.lat.toFixed(4)}, ${selectedPlace.lon.toFixed(4)}`;
+  } else {
+    modalSelectedPlace = null;
+    modalLocInput.value = '';
+    if(modalCoordReadout) modalCoordReadout.textContent = '';
+  }
+
+  if(modalMapDrawer && modalMapDrawer.classList.contains('show')){
+    setTimeout(() => {
+      if(modalLeafMap){
+        modalLeafMap.invalidateSize();
+        if(modalSelectedPlace){
+          modalLeafMap.setView([modalSelectedPlace.lat, modalSelectedPlace.lon], 13);
+          placeModalMapPin(modalSelectedPlace.lat, modalSelectedPlace.lon);
+        }
+      }
+    }, 100);
+  }
 }
 
 openUploadBtn.addEventListener('click', openUploadFlow);
@@ -2495,11 +2657,26 @@ sightingForm.addEventListener('submit', async (e) => {
   const dVal = modalDateInput.value;
   const tVal = modalTimeInput.value;
 
+  let lat = modalSelectedPlace ? modalSelectedPlace.lat : 0;
+  let lon = modalSelectedPlace ? modalSelectedPlace.lon : 0;
+
+  if((!lat || !lon) && locStr){
+    try {
+      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(locStr)}&count=1&language=en&format=json`);
+      const gData = await res.json();
+      if(gData && gData.results && gData.results.length > 0){
+        lat = gData.results[0].latitude;
+        lon = gData.results[0].longitude;
+        modalSelectedPlace = { name: locStr, lat, lon };
+      }
+    } catch(err){}
+  }
+
   if(modalAutoWeatherCheck.checked){
     try{
-      const lat = selectedPlace ? selectedPlace.lat : 20.0;
-      const lon = selectedPlace ? selectedPlace.lon : 78.0;
-      const wUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,relativehumidity_2m,precipitation,windspeed_10m&timezone=auto&past_days=60&forecast_days=16`;
+      const wLat = lat || (selectedPlace ? selectedPlace.lat : 20.0);
+      const wLon = lon || (selectedPlace ? selectedPlace.lon : 78.0);
+      const wUrl = `https://api.open-meteo.com/v1/forecast?latitude=${wLat}&longitude=${wLon}&hourly=temperature_2m,relativehumidity_2m,precipitation,windspeed_10m&timezone=auto&past_days=60&forecast_days=16`;
       const wRes = await fetch(wUrl);
       if(wRes.ok){
         const wData = await wRes.json();
@@ -2518,8 +2695,8 @@ sightingForm.addEventListener('submit', async (e) => {
     id: String(Date.now()),
     species: spName,
     location: locStr,
-    lat: selectedPlace ? selectedPlace.lat : 0,
-    lon: selectedPlace ? selectedPlace.lon : 0,
+    lat: lat,
+    lon: lon,
     dateTime: `${dVal} ${tVal}`,
     weatherSummary: weatherSum,
     notes: modalNotesInput.value.trim(),
@@ -2532,6 +2709,9 @@ sightingForm.addEventListener('submit', async (e) => {
   await persistUserSightings(newEntry);
 
   sightingForm.reset();
+  modalSelectedPlace = null;
+  if(modalCoordReadout) modalCoordReadout.textContent = '';
+  if(modalMapDrawer) modalMapDrawer.classList.remove('show');
   currentPhotoBase64 = '';
   previewWrap.classList.remove('show');
   dropzonePrompt.style.display = 'block';
